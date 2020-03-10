@@ -9,6 +9,8 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+
 @Service
 public class DeptServiceImpl implements DeptService {
     @Autowired
@@ -90,5 +92,12 @@ public class DeptServiceImpl implements DeptService {
     @Override
     public void deletDept(Integer id) {
         departmentMapper.deleteByPrimaryKey(id);
+    }
+
+    @Cacheable(value = "dept")
+    @Override
+    public Collection<Department> selectAll() {
+        Collection<Department> departments = departmentMapper.selectAll();
+        return departments;
     }
 }

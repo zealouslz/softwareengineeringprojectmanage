@@ -2,10 +2,13 @@ package com.zeal.softwareengineeringprojectmanage.mapper;
 
 import com.zeal.softwareengineeringprojectmanage.bean.Department;
 import com.zeal.softwareengineeringprojectmanage.bean.DepartmentExample;
+
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
 
@@ -97,4 +100,7 @@ public interface DepartmentMapper {
      * @mbggenerated
      */
     int updateByPrimaryKey(Department record);
+
+    @Select("select * from department")
+    Collection<Department> selectAll();
 }
