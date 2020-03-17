@@ -1,6 +1,7 @@
 package com.zeal.softwareengineeringprojectmanage.service.impl;
 
 import com.zeal.softwareengineeringprojectmanage.bean.Teacher;
+import com.zeal.softwareengineeringprojectmanage.bean.TeacherExample;
 import com.zeal.softwareengineeringprojectmanage.mapper.TeacherMapper;
 import com.zeal.softwareengineeringprojectmanage.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,5 +24,29 @@ public class TeacherServiceImpl implements TeacherService {
     public Teacher selectByTeaId(Integer id) {
         Teacher teacher = teacherMapper.selectByTeaId(id);
         return teacher;
+    }
+
+    @Override
+    public int updateByExample(Teacher teacher, TeacherExample teacherExample) {
+        int i = teacherMapper.updateByExample(teacher, teacherExample);
+        return i;
+    }
+
+    @Override
+    public Teacher selectByPrimayKey(Integer id) {
+        Teacher teacher = teacherMapper.selectByPrimaryKey(id);
+        return teacher;
+    }
+
+    @Override
+    public int insert(Teacher teacher) {
+        int insert = teacherMapper.insert(teacher);
+        return insert;
+    }
+
+    @Override
+    public int deleteByPrimaryKey(Integer id) {
+        int i = teacherMapper.deleteByPrimaryKey(id);
+        return i;
     }
 }

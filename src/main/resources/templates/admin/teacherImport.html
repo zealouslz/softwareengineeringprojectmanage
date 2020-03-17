@@ -48,41 +48,21 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#adminsidebar(activeUri='studentImport')"></div>
+				<div th:replace="commons/bar::#adminsidebar(activeUri='teacherImport')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<h3>单独添加</h3>
-					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/addSingleStudent}" method="post">
-						<!--发送put请求修改员工数据-->
-						<!--
-						1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
-						2、页面创建一个post表单
-						3、创建一个input项，name="_method";值就是我们指定的请求方式
-						-->
+					<form th:action="@{/addSingleTeacher}" method="post">
 						<div class="form-group">
-							<label>学号:</label>
-							<input name="stuid" type="number" class="form-control" placeholder="2016123***" >
+							<label>工号:</label>
+							<input name="teaid" type="number" class="form-control" placeholder="2016123***" >
 						</div>
 						<div class="form-group">
 							<label>姓名:</label>
-							<input name="stuname" type="text" class="form-control" placeholder="张三" >
+							<input name="teaname" type="text" class="form-control" placeholder="张三" >
 						</div>
 						<div class="form-group">
 							<label>密码:</label>
 							<input name="password" type="text" class="form-control" placeholder="123456" >
-						</div>
-						<div class="form-group">
-							<!--提交的是部门的id-->
-							<label>班级:</label>
-							<select class="form-control" name="classid" >
-								<option th:selected="${clazz!=null}" th:value="${clazz.id}" th:each="clazz:${clazzes}" th:text="${clazz.classname}">1</option>
-							</select>
-						</div>
-						<div class="form-group">
-							<label>指导教师:</label>
-							<select class="form-control" name="teaid">
-								<option th:selected="${teacher!=null}" th:value="${teacher.id}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
-							</select>
 						</div>
 						<p style="color: red" th:text="${addIsSuccess}" th:if="${not #strings.isEmpty(addIsSuccess)}"></p>
 						<button type="submit" class="btn btn-primary" >添加</button>
@@ -91,7 +71,7 @@
 					<br><br>
 					<h3>文件导入</h3>
 					<h4 th:inlines="text">文件上传</h4>
-					<form method="post" enctype="multipart/form-data" id="form" action="/upload">
+					<form method="post" enctype="multipart/form-data" id="form" action="/uploadTea">
 						<input type="file" name="filename"/>
 						<input type="submit" value="提交上传"/>
 						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>

@@ -16,11 +16,11 @@
 		<form class="form-signin" action="dashboard.html" th:action="@{/user/login}"  >
 			<img class="mb-4" th:src="@{/asserts/img/logo.jpg}" src="asserts/img/bootstrap-solid.svg" alt="" width="102" height="102">
 			<h1 class="h3 mb-3 font-weight-normal" th:text="#{login.tip}">Please sign in</h1>
-			<p style="color: red" th:text="${session.error}" th:if="${not #strings.isEmpty(session.error)}"></p>
+			<p style="color: red" th:text="${error}" th:if="${not #strings.isEmpty(error)}"></p>
 			<input type="number" name="username"  class="form-control"  th:placeholder="#{login.username}" required="" autofocus="">
 			<label class="sr-only"></label>
 			<input type="password"  name="password" class="form-control" th:placeholder="#{login.password}" required="">
-			<p style="color: red" th:text="${session.verificationError}" th:if="${not #strings.isEmpty(session.verificationError)}"></p>
+			<p style="color: red" th:text="${verificationError}" th:if="${not #strings.isEmpty(verificationError)}"></p>
 			<div>
 				<input type="text" name="verification" class="form-control" th:placeholder="#{login.verification}" th:width="16"/>
 				<img id="captchaImage" style="height: 45px;width: 105px" class="captchaImage" onclick="changeImage()" src="getCode">
