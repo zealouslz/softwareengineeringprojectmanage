@@ -12,4 +12,5 @@ public interface TeacherService {
     Teacher selectByPrimayKey(Integer id);
     int updateByExample(Teacher teacher, TeacherExample teacherExample);
     int deleteByPrimaryKey(Integer id);
+    List<Teacher> selectByPage(int start,int perPageSize);
 }

@@ -35,6 +35,7 @@ public class AdminController {
     @Autowired
     private ImportService importService;
 
+
     @RequestMapping("/addSingleStudent")
     public String importStudent(Student student, HttpSession session, RedirectAttributes redirectAttributes){
             try {
@@ -134,27 +135,6 @@ public class AdminController {
         model.addAttribute("clazzes",clazzes);
         return "admin/manageStu";
     }
-    @RequestMapping("/manageTea")
-    public String manageTea(@RequestParam("isUpdateSuccess") String isUpdateSuccess,
-                            Model model){
-        List<Teacher> teachers = teacherService.selectAll();
-        model.addAttribute("teachers",teachers);
-        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
-        return "admin/manageTea";
-    }
-    @RequestMapping("/selectStuByClazz")
-    public String selectStuByClazz(@RequestParam("classid") Integer clazzId,
-                                   @RequestParam("isUpdateSuccess") String isUpdateSuccess,
-                                   Model model){
-        List<Clazz> clazzes = clazzService.selectAll();
-        model.addAttribute("clazzes",clazzes);
-        List<Teacher> teachers = teacherService.selectAll();
-        model.addAttribute("teachers",teachers);
-        List<Student> students = studentService.selectByClazzId(clazzId);
-        model.addAttribute("students",students);
-        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
-        return "admin/manageStu";
-    }
 
     @RequestMapping("/getStuDetail/{stuid}")
     public String updateStu(@PathVariable("stuid") Integer stuid,Model model){
@@ -184,7 +164,7 @@ public class AdminController {
         Integer topicid = student.getTopicid();
         int i = studentService.updateByStuId(stuid,stuname,password,classid,teaid,isgroupleader,groupid,topicid);
         String isUpdateSuccess="成功修改了"+i+"条数据";
-        return "redirect:/selectStuByClazz?classid="+classid+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+        return "redirect:/student/page?classid="+classid+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
     @RequestMapping("/updateTeaById")
     public String updateTeaById(Teacher teacher,Model model) throws UnsupportedEncodingException {
@@ -193,7 +173,7 @@ public class AdminController {
         criteria.andIdEqualTo(teacher.getId());
         int i = teacherService.updateByExample(teacher,teacherExample);
         String isUpdateSuccess="成功修改了"+i+"条数据";
-        return "redirect:/manageTea?&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+        return "redirect:/teacher/page?&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
     @RequestMapping("/upDateStu/delete/{stuid}")
     public String deleteStuByStuId(@PathVariable("stuid") Integer stuId,
@@ -202,13 +182,43 @@ public class AdminController {
         Integer classid = student.getClassid();
         int i = studentService.deleteStuByStuId(stuId);
         String isUpdateSuccess="成功删除了"+i+"条数据";
-        return "redirect:/selectStuByClazz?classid="+classid+ "&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+        return "redirect:/student/page?classid="+classid+ "&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
     @RequestMapping("/upDateTea/delete/{id}")
     public String deleteTeaById(@PathVariable("id") Integer Id,
                                    Model model) throws UnsupportedEncodingException {
         int i = teacherService.deleteByPrimaryKey(Id);
         String isUpdateSuccess="成功删除了"+i+"条数据";
-        return "redirect:/manageTea?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+        return "redirect:/teacher/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    }
+
+    @RequestMapping(value = "/student/page")
+    public String findStuByPage(String classid,int page,String isUpdateSuccess, Model model) {
+            List<Clazz> clazzes = clazzService.selectAll();
+            model.addAttribute("clazzes",clazzes);
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("teachers",teachers);
+            Page p=new Page();
+            p.setTotalUsers(studentService.selectByClazzId(Integer.parseInt(classid)).size());
+            p.setCurrentPage(page);
+            List<Student> list = studentService.selectByClazzIdLimit(Integer.parseInt(classid),(page - 1) * p.getPageSize(), p.getPageSize());
+//            查询结果是list集合
+            model.addAttribute("list", list);
+            model.addAttribute("page", p);
+            model.addAttribute("clazzid",classid);
+            model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+            return "admin/manageStu";
+    }
+
+    @RequestMapping("/teacher/page")
+    public String findTeaByPage(int page,String isUpdateSuccess,Model model){
+        Page p=new Page();
+        p.setTotalUsers(teacherService.selectAll().size());
+        p.setCurrentPage(page);
+        List<Teacher> teachers = teacherService.selectByPage((page - 1) * p.getPageSize(), p.getPageSize());
+        model.addAttribute("teachers", teachers);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        model.addAttribute("page", p);
+        return "admin/manageTea";
     }
 }

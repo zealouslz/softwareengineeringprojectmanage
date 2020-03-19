@@ -75,6 +75,33 @@
 							</tr>
 							</tbody>
 						</table>
+						<table  th:if="${page!=null}">
+							<tr >
+								<form  th:action="@{/teacher/page}">
+									<td><input type="hidden" name="page" th:value="1"></td>
+									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
+									<td><input type="submit" value="首页"></td>
+								</form>
+								<form  th:action="@{/teacher/page}">
+									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
+									<td><input type="submit" value="上一页"></td>
+								</form>
+								<td>当前：第[[${page.currentPage}]]页<--></td>
+								<td>共：[[${page.totalPages}]]页</td>
+								<form  th:action="@{/teacher/page}">
+									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
+									<td><input type="submit" value="下一页"></td>
+								</form>
+								<form  th:action="@{/teacher/page}">
+									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
+									<td><input type="submit" value="尾页"></td>
+								</form>
+								<form  th:action="@{/teacher/page}">
+									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
+									<td><input type="submit" value="确定"></td>
+								</form>
+							</tr>
+						</table>
 					</div>
 
 				</main>

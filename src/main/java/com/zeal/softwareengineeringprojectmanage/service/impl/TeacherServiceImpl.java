@@ -49,4 +49,10 @@ public class TeacherServiceImpl implements TeacherService {
         int i = teacherMapper.deleteByPrimaryKey(id);
         return i;
     }
+
+    @Override
+    public List<Teacher> selectByPage(int start, int perPageSize) {
+        List<Teacher> teachers = teacherMapper.selectByPage(start, perPageSize);
+        return teachers;
+    }
 }

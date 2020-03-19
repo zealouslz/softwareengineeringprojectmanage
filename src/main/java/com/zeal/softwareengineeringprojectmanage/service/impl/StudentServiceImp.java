@@ -61,4 +61,10 @@ public class StudentServiceImp implements StudentService {
         int i = studentMapper.deleteByStuId(stuId);
         return i;
     }
+
+    @Override
+    public List<Student> selectAll() {
+        List<Student> students = studentMapper.selectAll();
+        return students;
+    }
 }

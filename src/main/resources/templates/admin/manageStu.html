@@ -51,7 +51,7 @@
 				<div th:replace="commons/bar::#adminsidebar(activeUri='manageStu')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/selectStuByClazz(isUpdateSuccess=null)}" method="post">
+					<form th:action="@{/student/page(page=1,isUpdateSuccess=null)}" method="post">
 						<!--发送put请求修改员工数据-->
 						<!--
 						1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
@@ -61,7 +61,7 @@
 						<div class="form-group">
 							<label>请选择班级:</label>
 							<select class="form-control" name="classid" >
-								<option th:selected="${clazz!=null}" th:value="${clazz.id}" th:each="clazz:${clazzes}" th:text="${clazz.classname}">1</option>
+								<option th:selected="${clazz!=null}?${clazz.id==clazzid}" th:value="${clazz.id}" th:each="clazz:${clazzes}" th:text="${clazz.classname}">1</option>
 							</select>
 							<button type="submit" class="btn btn-primary" >查询</button>
 						</div>
@@ -83,7 +83,7 @@
 							</tr>
 							</thead>
 							<tbody>
-							<tr th:each="student:${students}">
+							<tr th:each="student:${list}">
 								<td th:text="${student.stuid}"></td>
 								<td th:text="${student.stuname}"></td>
 								<td th:text="${student.password}"></td>
@@ -99,8 +99,39 @@
 							</tr>
 							</tbody>
 						</table>
-					</div>
+						<table style="margin: auto" th:if="${page!=null}">
+							<tr >
+								<form  th:action="@{/student/page}">
+									<td><input type="hidden" name="page" th:value="1"></td>
+									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="submit" value="首页"></td>
+								</form>
+								<form  th:action="@{/student/page(classid=${clazzid})}">
+									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
+									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="submit" value="上一页"></td>
+								</form>
+								<td>当前：第[[${page.currentPage}]]页<--></td>
+								<td>共：[[${page.totalPages}]]页</td>
+								<form  th:action="@{/student/page(classid=${clazzid})}">
+									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
+									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="submit" value="下一页"></td>
+								</form>
+								<form  th:action="@{/student/page(classid=${clazzid})}">
+									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
+									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="submit" value="尾页"></td>
+								</form>
+								<form  th:action="@{/student/page(classid=${clazzid})}">
+											<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
+											<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+											<td><input type="submit" value="确定"></td>
+								</form>
+							</tr>
+						</table>
 
+					</div>
 				</main>
 			</div>
 		</div>
