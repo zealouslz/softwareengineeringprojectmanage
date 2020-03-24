@@ -71,6 +71,7 @@ public class LoginController {
                 } else {
                     if (teacher.getPassword().equals(password)) {
                         session.setAttribute("loginUser", teacher.getTeaname());
+                        session.setAttribute("userId",teacher.getId());
                         return "redirect:/teachermain.html";
                     } else {
                         redirectAttributes.addFlashAttribute("error", "教师密码错误");

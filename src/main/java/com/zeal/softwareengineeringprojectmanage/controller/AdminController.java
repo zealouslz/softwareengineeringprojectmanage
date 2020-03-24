@@ -83,9 +83,15 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("IsSuccess", "文件不能为空");
             return "redirect:/studentImport";
         }
-        inputStream = file.getInputStream();
-        list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
-        inputStream.close();
+        try {
+            inputStream = file.getInputStream();
+            list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
+            inputStream.close();
+        }catch (Exception e){
+            redirectAttributes.addFlashAttribute("IsSuccess","文件格式错误请重新上传，必须是.xls或者.xlsx");
+            return "redirect:/studentImport";
+        }
+
 //连接数据库部分
         for (int i = 0; i < list.size(); i++) {
             List<Object> lo = list.get(i);
@@ -113,9 +119,14 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("IsSuccess", "文件不能为空");
             return "redirect:/teacherImport";
         }
-        inputStream = file.getInputStream();
-        list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
-        inputStream.close();
+        try {
+            inputStream = file.getInputStream();
+            list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
+            inputStream.close();
+        }catch (Exception e){
+            redirectAttributes.addFlashAttribute("IsSuccess","文件格式错误请重新上传，必须是.xls或者.xlsx");
+            return "redirect:/teacherImport";
+        }
 //连接数据库部分
         for (int i = 0; i < list.size(); i++) {
             List<Object> lo = list.get(i);
@@ -220,5 +231,89 @@ public class AdminController {
         model.addAttribute("isUpdateSuccess",isUpdateSuccess);
         model.addAttribute("page", p);
         return "admin/manageTea";
+    }
+
+    @RequestMapping("/manageClass/page")
+    public String ManageClass(int page,String isUpdateSuccess ,Model model ){
+        Page p=new Page();
+        p.setTotalUsers(clazzService.selectAll().size());
+        p.setCurrentPage(page);
+        List<Clazz> clazzes = clazzService.selectByPage((page - 1) * p.getPageSize(), p.getPageSize());
+        model.addAttribute("clazzes",clazzes);
+        model.addAttribute("page", p);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        return "admin/manageClass";
+    }
+
+    @RequestMapping("/addClass")
+    public String addClass(Model model){
+        List<Teacher> teachers = teacherService.selectAll();
+        model.addAttribute("teachers",teachers);
+        return "admin/addClass";
+    }
+
+    @RequestMapping("/addSingleClass")
+    public String addSingleClass(Clazz clazz) throws UnsupportedEncodingException {
+        int insert = clazzService.insert(clazz);
+        String isUpdateSuccess="成功添加"+insert+"条数据";
+        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    }
+
+    @RequestMapping(value="/classUpload",method= RequestMethod.POST)
+    public String  uploadClassExcel(HttpServletRequest request,HttpSession session,RedirectAttributes redirectAttributes,Model model) throws  Exception{
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+
+        InputStream inputStream =null;
+        List<List<Object>> list = null;
+        int insert=0;
+        MultipartFile file = multipartRequest.getFile("filename");
+        if(file.isEmpty()){
+            redirectAttributes.addFlashAttribute("IsSuccess", "文件不能为空");
+            return "redirect:/addClass";
+        }
+        try {
+            list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
+            inputStream = file.getInputStream();
+            inputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("IsSuccess","文件格式错误请重新上传，必须是.xls或者.xlsx");
+            return "redirect:/addClass";
+        }
+
+//连接数据库部分
+        for (int i = 0; i < list.size(); i++) {
+            List<Object> lo = list.get(i);
+            Clazz clazz=new Clazz();
+            clazz.setClassname(String.valueOf(lo.get(1)));
+            clazz.setCharge(String.valueOf(lo.get(2)));
+            insert += clazzService.insert(clazz);
+            //调用mapper中的insert方法
+        }
+        String isUpdateSuccess="成功添加"+insert+"条数据";
+        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    }
+
+    @RequestMapping("/getClassDetail/{id}")
+    public String updateClass(@PathVariable("id") Integer id,Model model){
+        Clazz clazz = clazzService.selectByPrimaryKey(id);
+        model.addAttribute("clazz",clazz);
+        List<Teacher> teachers = teacherService.selectAll();
+        model.addAttribute("teachers",teachers);
+        return "admin/updateClass";
+    }
+
+    @RequestMapping("/updateClassById")
+    public String updateClassById(Clazz clazz) throws UnsupportedEncodingException {
+        int i = clazzService.updateByPrimaryKey(clazz);
+        String isUpdateSuccess="成功修改"+i+"条数据";
+        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    }
+
+    @RequestMapping("/upDateClass/delete/{id}")
+    public String deleteClassById(@PathVariable("id") Integer id) throws UnsupportedEncodingException {
+        int i = clazzService.deleteByClassId(id);
+        String isUpdateSuccess="成功删除"+i+"条数据";
+        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
 }

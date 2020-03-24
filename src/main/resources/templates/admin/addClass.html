@@ -7,12 +7,13 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>teacher</title>
+		<title>Admin</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
 		<!-- Custom styles for this template -->
 		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<link href="asserts/css/welcom.css"  rel="stylesheet">
 		<style type="text/css">
 			/* Chart.js */
 			
@@ -47,9 +48,38 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#teachersidebar(activeUri='teachermain.html')"></div>
+				<div th:replace="commons/bar::#adminsidebar"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<img th:src="@{asserts/img/teacherwelcome.jpg}" height="600" width="1200" >
+					<h3>单独添加</h3>
+					<!--需要区分是员工修改还是添加；-->
+					<form th:action="@{/addSingleClass}" method="post">
+						<!--发送put请求修改员工数据-->
+						<!--
+						1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
+						2、页面创建一个post表单
+						3、创建一个input项，name="_method";值就是我们指定的请求方式
+						-->
+						<div class="form-group">
+							<label>班级:</label>
+							<input name="classname" type="text" class="form-control" placeholder="软嵌161" >
+						</div>
+						<div class="form-group">
+							<label>班主任:</label>
+							<select class="form-control" name="charge">
+								<option th:selected="${teacher!=null}" th:value="${teacher.teaname}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
+							</select>
+						</div>
+						<button type="submit" class="btn btn-primary" >添加</button>
+						<button type="reset"  class="btn btn-primary">重置</button>
+					</form>
+					<br><br>
+					<h3>文件导入</h3>
+					<h4 th:inlines="text">文件上传</h4>
+					<form method="post" enctype="multipart/form-data" id="form" action="/classUpload">
+						<input type="file" name="filename"/>
+						<input type="submit" value="提交上传"/>
+					</form>
+					<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
 				</main>
 			</div>
 		</div>
@@ -98,6 +128,7 @@
 				}
 			});
 		</script>
+
 
 	</body>
 

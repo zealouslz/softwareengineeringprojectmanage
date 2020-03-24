@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>更新选题信息</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<style type="text/css">
+			/* Chart.js */
+			
+			@-webkit-keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			@keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			.chartjs-render-monitor {
+				-webkit-animation: chartjs-render-animation 0.001s;
+				animation: chartjs-render-animation 0.001s;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#teachersidebar"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
+					<!--需要区分是员工修改还是添加；-->
+					<form th:action="@{/updateTopicById}" method="post" enctype="multipart/form-data">
+						<!--发送put请求修改员工数据-->
+						<!--
+						1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
+						2、页面创建一个post表单
+						3、创建一个input项，name="_method";值就是我们指定的请求方式
+						-->
+						<div class="form-group">
+							<label>选题id：</label>
+							<input name="id" type="text" class="form-control" placeholder="12" th:value="${topic!=null}?${topic.id}" th:readonly="true">
+						</div>
+						<div class="form-group">
+							<label>选题名：</label>
+							<input name="topicname" type="text" class="form-control"  th:value="${topic!=null}?${topic.topicname}" >
+						</div>
+						<div class="form-group">
+							<label>选题描述：</label>
+							<input name="topicdescribe" type="text" class="form-control"  th:value="${topic!=null}?${topic.topicdescribe}" >
+						</div>
+						<div class="form-group">
+							<label>参考文档：</label>
+							<input name="downloadlink" type="text" class="form-control"  th:value="${topic!=null}?${topic.downloadlink}" th:readonly="true">
+						</div>
+						<div class="form-group">
+							<label>重新上传：</label>
+							<input type="file" name="file" ><br>
+						</div>
+						<div class="form-group">
+							<label>指导教师：</label>
+							<input name="teaid" type="text" class="form-control"  th:text="${teacher.teaname}" th:value="${teacher.id}" th:readonly="true">
+						</div>
+						<div class="form-group">
+							<label>截止时间：</label>
+							<input name="deadline" type="datetime-local"  th:value="${#dates.format(topic.deadline,'yyyy-MM-dd')+'T'}+${#dates.format(topic.deadline,'HH:mm')}" >
+						</div>
+						<div class="form-group">
+							<label>人数上限：</label>
+							<input name="maxsize" type="text" class="form-control"  th:value="${topic!=null}?${topic.maxsize}" th:readonly="true">
+						</div>
+						<button type="submit" class="btn btn-primary">修改</button>
+					</form>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.4.1/jquery.js}"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+		<script>
+			feather.replace()
+		</script>
+
+	</body>
+
+</html>
