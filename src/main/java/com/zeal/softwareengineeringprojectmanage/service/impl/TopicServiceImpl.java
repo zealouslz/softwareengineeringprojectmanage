@@ -1,12 +1,12 @@
 package com.zeal.softwareengineeringprojectmanage.service.impl;
 
-import com.zeal.softwareengineeringprojectmanage.bean.TeacherExample;
 import com.zeal.softwareengineeringprojectmanage.bean.Topic;
 import com.zeal.softwareengineeringprojectmanage.mapper.TopicMapper;
 import com.zeal.softwareengineeringprojectmanage.service.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -54,5 +54,17 @@ public class TopicServiceImpl implements TopicService {
     public int deleteByPrimary(Integer id) {
         int i = topicMapper.deleteByPrimaryKey(id);
         return i;
+    }
+
+    @Override
+    public List<Topic> selectByTeaIdAddChooseDeadline(Integer teacherId) {
+        List<Topic> topics = topicMapper.selectByTeaIdAddChooseDeadline(teacherId);
+        return topics;
+    }
+
+    @Override
+    public List<Topic> selectByTeaIdAddChooseDeadlineAndPage(Integer teaId, Integer start, Integer pageSize) {
+        List<Topic> topics = topicMapper.selectByTeaIdAddChooseDeadlineAndPage(teaId, start, pageSize);
+        return topics;
     }
 }

@@ -2,6 +2,7 @@ package com.zeal.softwareengineeringprojectmanage.service;
 
 import com.zeal.softwareengineeringprojectmanage.bean.Topic;
 
+import java.util.Date;
 import java.util.List;
 
 public interface TopicService {
@@ -12,4 +13,6 @@ public interface TopicService {
     Topic selectByPrimaryKey(Integer id);
     int updateByPrimaryKey(Topic topic);
     int deleteByPrimary(Integer id);
+    List<Topic> selectByTeaIdAddChooseDeadline(Integer teacherId);
+    List<Topic> selectByTeaIdAddChooseDeadlineAndPage(Integer teaId,Integer start,Integer pageSize);
 }

@@ -84,15 +84,19 @@
 						</div>
 						<div class="form-group">
 							<label>指导教师：</label>
-							<input name="teaid" type="text" class="form-control"  th:text="${teacher.teaname}" th:value="${teacher.id}" th:readonly="true">
+							<input th:text="${teacher.teaname}" th:value="${teacher.id}" name="teaid" type="text" class="form-control"   th:readonly="true">
 						</div>
 						<div class="form-group">
 							<label>截止时间：</label>
 							<input name="deadline" type="datetime-local"  th:value="${#dates.format(topic.deadline,'yyyy-MM-dd')+'T'}+${#dates.format(topic.deadline,'HH:mm')}" >
 						</div>
+                        <div class="form-group">
+                            <label>选题截止时间：</label>
+                            <input name="choosedeadline" type="datetime-local"  th:value="${#dates.format(topic.choosedeadline,'yyyy-MM-dd')+'T'}+${#dates.format(topic.choosedeadline,'HH:mm')}" >
+                        </div>
 						<div class="form-group">
 							<label>人数上限：</label>
-							<input name="maxsize" type="text" class="form-control"  th:value="${topic!=null}?${topic.maxsize}" th:readonly="true">
+							<input name="maxsize" type="number" th:value="${topic!=null}?${topic.maxsize}">
 						</div>
 						<button type="submit" class="btn btn-primary">修改</button>
 					</form>
@@ -112,7 +116,6 @@
 		<script>
 			feather.replace()
 		</script>
-
 	</body>
 
 </html>

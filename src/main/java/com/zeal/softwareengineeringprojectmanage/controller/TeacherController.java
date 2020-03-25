@@ -61,6 +61,7 @@ public class TeacherController {
                                  @RequestParam("topicdescribe") String topicdescribe,
                                  @RequestParam("teaid") Integer teaid,
                                  @RequestParam("deadline")String deadline,
+                                 @RequestParam("choosedeadline")String choosedeadline,
                                  @RequestParam("maxsize") Integer maxsize,
                                  @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
         if(!file.isEmpty()){
@@ -68,10 +69,13 @@ public class TeacherController {
             topic.setTopicname(topicname);
             topic.setTopicdescribe(topicdescribe);
             topic.setTeaid(teaid);
-            String[] str = deadline.split("[T]");
+            String[] str1 = deadline.split("[T]");
+            String[] str2 = choosedeadline.split("[T]");
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Date date1 = simpleDateFormat.parse(str[0]+" "+str[1]);
+            Date date1 = simpleDateFormat.parse(str1[0]+" "+str1[1]);
+            Date date2 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
             topic.setDeadline(date1);
+            topic.setChoosedeadline(date2);
             topic.setMaxsize(maxsize);
             Date date=new Date();
             File dir = new File(uploadPath);
@@ -121,6 +125,7 @@ public class TeacherController {
                                   @RequestParam("topicdescribe") String topicdescribe,
                                   @RequestParam("teaid") Integer teaid,
                                   @RequestParam("deadline")String deadline,
+                                  @RequestParam("choosedeadline")String choosedeadline,
                                   @RequestParam("maxsize") Integer maxsize,
                                   @RequestParam("downloadlink") String downloadlink,
                                   @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
@@ -132,10 +137,13 @@ public class TeacherController {
             topic.setTeaid(teaid);
             Date date1=new Date();
             topic.setReleasetime(date1);
-            String[] str = deadline.split("[T]");
+            String[] str1 = deadline.split("[T]");
+            String[] str2 = choosedeadline.split("[T]");
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Date date = simpleDateFormat.parse(str[0]+" "+str[1]);
-            topic.setDeadline(date);
+            Date date2 = simpleDateFormat.parse(str1[0]+" "+str1[1]);
+            Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+            topic.setDeadline(date2);
+            topic.setChoosedeadline(date3);
             topic.setMaxsize(maxsize);
             topic.setDownloadlink(downloadlink);
             int i = topicService.updateByPrimaryKey(topic);
@@ -155,8 +163,11 @@ public class TeacherController {
         Date date1=new Date();
         topic.setReleasetime(date1);
         String[] str = deadline.split("[T]");
+        String[] str2 = choosedeadline.split("[T]");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date date = simpleDateFormat.parse(str[0]+" "+str[1]);
+        Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+        topic.setChoosedeadline(date3);
         topic.setDeadline(date);
         topic.setMaxsize(maxsize);
         File dir = new File(uploadPath);

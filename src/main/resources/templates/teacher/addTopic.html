@@ -39,6 +39,7 @@
 				-webkit-animation: chartjs-render-animation 0.001s;
 				animation: chartjs-render-animation 0.001s;
 			}
+
 		</style>
 	</head>
 
@@ -50,7 +51,7 @@
 				<!--引入sidebar-->
 				<div th:replace="commons/bar::#teachersidebar"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h3>单独添加</h3>
+					<h3>请填写选题信息</h3>
 					<!--需要区分是员工修改还是添加；-->
 					<form th:action="@{/addSingleTopic}" method="post" enctype="multipart/form-data">
 						<div class="form-group">
@@ -59,10 +60,10 @@
 						</div>
 						<div class="form-group">
 							<label>选题描述:</label>
-							<input name="topicdescribe" type="text" class="form-control" placeholder="该系统需要完成****" >
+							<textarea name="topicdescribe" rows="6" class="form-control" placeholder="该系统需要完成****" ></textarea>
 						</div>
 						<div class="form-group">
-							<label>上传参考文档:</label>
+							<label>参考文档:</label>
 							<input type="file" name="file" ><br>
 						</div>
 						<div class="form-group">
@@ -73,6 +74,10 @@
 							<label>截止时间：</label>
 							<input type="datetime-local" name="deadline" >
 						</div>
+						<div>
+							<label>选题截止时间：</label>
+							<input type="datetime-local" name="choosedeadline" >
+						</div>
 						<div class="form-group">
 							<label>人数上限：</label>
 							<input type="number" name="maxsize">
@@ -80,16 +85,8 @@
 						<button type="submit" class="btn btn-primary" >添加</button>
 						<button type="reset"  class="btn btn-primary">重置</button>
 					</form>
-					<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
-					<br><br>
-					<h3>文件导入</h3>
-					<h4 th:inlines="text">文件上传</h4>
-					<form method="post" enctype="multipart/form-data" id="form" action="/classUpload">
-						<input type="file" name="filename"/>
-						<input type="submit" value="提交上传"/>
-					</form>
-					<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
 				</main>
+
 			</div>
 		</div>
 
@@ -136,8 +133,76 @@
 					}
 				}
 			});
-		</script>
 
+			function getLocation() {
+				if (navigator.geolocation) {
+					navigator.geolocation.getCurrentPosition(showPosition, showError);
+				} else {
+					alert("浏览器不支持地理定位...");
+				}
+			}
+			function showPosition(position) {
+				$("#latlon").html("纬度:" + position.coords.latitude + '，经度:' + position.coords.longitude);
+				  // 坐标转换：经度在前，纬度在后（经度，纬度）
+				 // 逆地理编码：纬度在前，经度在后（纬度，经度）
+				var latlon = position.coords.longitude + ',' + position.coords.latitude;
+				var changeLatlon = '';
+				// 百度地图坐标转换
+				var changeUrl = 'http://api.map.baidu.com/geoconv/v1/?coords=' + latlon + '&from=1&to=5&ak=lRRyy6qoBwnAgj3w4ugGFqoSsWC8du3v';
+				$.ajax({
+					type: "GET",
+					dataType: "jsonp",
+					url: changeUrl,
+					success: function (json) {
+						if (json.status == 0) {
+							$.each(json.result,function (i,v) {
+								// 逆地理编码：纬度在前，经度在后
+								changeLatlon = v.y + ',' + v.x;
+							});
+							//百度地图逆地理编码
+							var url = "http://api.map.baidu.com/geocoder/v2/?ak=lRRyy6qoBwnAgj3w4ugGFqoSsWC8du3v&callback=renderReverse&location=" + changeLatlon + "&output=json&pois=0";
+							$.ajax({
+								type: "GET",
+								dataType: "jsonp",
+								url: url,
+								beforeSend: function () {
+									$("#baidu_geo").html('正在定位...');
+								},
+								success: function (json) {
+									if (json.status == 0) {
+										$("#baidu_geo").html(json.result.formatted_address);
+									}
+								},
+								error: function (XMLHttpRequest, textStatus, errorThrown) {
+									$("#baidu_geo").html(changeLatlon + "的地址位置获取失败");
+								}
+							});
+						}
+					},
+					error: function (XMLHttpRequest, textStatus, errorThrown) {
+						alert("坐标转换失败");
+					}
+				});
+			}
+			// 定位失败 传 默认地址
+			function showError(error) {
+				switch (error.code) {
+					case error.PERMISSION_DENIED:
+						alert("定位失败,用户拒绝请求地理定位");
+						break;
+					case error.POSITION_UNAVAILABLE:
+						alert("定位失败,位置信息不可用");
+						break;
+					case error.TIMEOUT:
+						alert("定位失败,请求获取用户位置超时");
+						break;
+					case error.UNKNOWN_ERROR:
+						alert("定位失败,定位系统失效");
+						break;
+				}
+			}
+			getLocation();
+		</script>
 
 	</body>
 

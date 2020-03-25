@@ -1,5 +1,6 @@
 package com.zeal.softwareengineeringprojectmanage.service.impl;
 
+import com.zeal.softwareengineeringprojectmanage.bean.ChoosedTopic;
 import com.zeal.softwareengineeringprojectmanage.bean.Student;
 import com.zeal.softwareengineeringprojectmanage.bean.StudentExample;
 import com.zeal.softwareengineeringprojectmanage.mapper.StudentMapper;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StudentServiceImp implements StudentService {
@@ -66,5 +68,17 @@ public class StudentServiceImp implements StudentService {
     public List<Student> selectAll() {
         List<Student> students = studentMapper.selectAll();
         return students;
+    }
+
+    @Override
+    public List<ChoosedTopic> haveChoosedTopic() {
+        List<ChoosedTopic> havechoosedtopic = studentMapper.haveChoosedTopic();
+        return havechoosedtopic;
+    }
+
+    @Override
+    public int updateTopicIdByStuId(Integer topicId, Integer stuId) {
+        int i = studentMapper.updateTopicIdByStuId(topicId, stuId);
+        return i;
     }
 }
