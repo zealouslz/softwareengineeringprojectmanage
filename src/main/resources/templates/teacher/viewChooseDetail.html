@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>选题</title>
+		<title>管理学生信息</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -48,70 +48,65 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#studentsidebar(activeUri='choosetopic')"></div>
+				<div th:replace="commons/bar::#teachersidebar(activeUri='viewChooseDetail')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<p style="color: red" th:text="${isSuccess}" th:if="${not #strings.isEmpty(isSuccess)}"></p>
+					<p style="color: red" th:text="${isUpdateSuccess}" th:if="${not #strings.isEmpty(isUpdateSuccess)}"></p>
 					<div class="table-responsive">
 						<table class="table table-striped table-sm">
 							<thead>
 							<tr>
-								<th>id</th>
+								<th>选题id</th>
 								<th>选题名</th>
-								<th>选题描述</th>
-								<th>参考文档</th>
-								<th>指导教师</th>
-								<th>发布时间</th>
-								<th>截止时间</th>
 								<th>选题截止时间</th>
-								<th>已选人数</th>
+								<th>已选/最多</th>
+								<th>名单</th>
 								<th>操作</th>
 							</tr>
 							</thead>
 							<tbody>
-							<tr th:each="topic:${topics}" >
+							<tr th:each="topic:${topics}">
 								<td th:text="${topic.id}"></td>
 								<td th:text="${topic.topicname}"></td>
-								<td th:text="${#strings.abbreviate(topic.topicdescribe,10)}"></td>
-								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
-								<td th:text="${teacher.teaname}" th:value="${teacher.id}"></td>
-								<td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm')}"></td>
-								<td th:text="${#dates.format(topic.deadline,'yyyy-MM-dd HH:mm')}"></td>
-								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm')}"></td>
+								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm:ss')}"></td>
 								<td th:text="${choosedTopic.count}+'/'+${topic.maxsize}" th:each="choosedTopic:${choosedTopics}" th:if="${choosedTopic.topicId}==${topic.id}"></td>
+								<td><label th:text="${student.stuname+'&nbsp&nbsp'}"  th:each="student:${students}" th:if="${student.topicid}==${topic.id}" ></label></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:each="choosedTopic:${choosedTopics}" th:if="${choosedTopic.topicId}==${topic.id}and${choosedTopic.count<topic.maxsize}" th:href="@{/confirmChooseTopic}+'?topicId='+${topic.id}+'&stuId='+${session.stuId}"  th:onclick="return foo('确认选择'+[[${teacher.teaname}]]+'老师的'+[[${topic.topicname}]]+'吗？')" >选择</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/confirmGroup/}+${topic.id}">确定分组</a>
+                                    <button  class="btn btn-sm btn-danger deleteBtn" th:onclick="stopTopic('[[${topic.id}]]')">停开</button>
 								</td>
 							</tr>
 							</tbody>
 						</table>
 						<table  th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/viewChooseDetail}">
 									<td><input type="hidden" name="page" th:value="1"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
-									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
+									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
+									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+										&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+										&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/viewChooseDetail}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/viewChooseDetail}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/viewChooseDetail}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
-									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+								<form  th:action="@{/viewChooseDetail}">
+									<td>跳转到第:<input type="text" name="page" size="5" />页</td>
+									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="确定"></td>
 								</form>
 							</tr>
@@ -125,7 +120,7 @@
 		<!-- Bootstrap core JavaScript
     ================================================== -->
 		<!-- Placed at the end of the document so the pages load faster -->
-		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+        <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
 		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/popper.js}"></script>
 		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
 
@@ -133,12 +128,27 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
-			function foo(teaname){
-				if(confirm(teaname)){
-					return true;
-				}
-				return false;
-			}
+
+			function stopTopic(topic) {
+                var route = window.location.href
+                $.ajax({
+                    url:'/stopTopic',
+                    type: "POST",
+                    data: {
+                        'topicId': topic
+                    },
+                    dataType: "text",
+                    async: false,
+                    success: function (datas) {
+                        //将json对象转换为字符串
+                        alert(datas.toString());
+                        window.location.replace(route)
+                    },
+                    error: function () {
+                        alert("提交请求失败！");
+                    }
+                });
+            }
 		</script>
 
 		<!-- Graphs -->

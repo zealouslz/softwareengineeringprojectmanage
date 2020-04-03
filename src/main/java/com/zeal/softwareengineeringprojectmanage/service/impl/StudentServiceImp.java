@@ -81,4 +81,75 @@ public class StudentServiceImp implements StudentService {
         int i = studentMapper.updateTopicIdByStuId(topicId, stuId);
         return i;
     }
+
+    @Override
+    public List<Student> selectByTeaId(Integer teaId) {
+        StudentExample studentExample=new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andTeaidEqualTo(teaId);
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students;
+    }
+
+    @Override
+    public List<Student> selectByTopicId(Integer topicId) {
+        StudentExample studentExample=new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andTopicidEqualTo(topicId);
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students;
+    }
+
+    @Override
+    public int updateGroupIdByTopicId(Integer topicId, Integer groupId) {
+        int i = studentMapper.updateGroupIdByTopicId(topicId, groupId);
+        return i;
+    }
+
+    @Override
+    public int updateGroupLeader(Integer id) {
+        int i = studentMapper.updateGroupLeader(id);
+        return i;
+    }
+
+    @Override
+    public List<Student> selectByGroupId(Integer groupId) {
+        StudentExample studentExample=new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andGroupidEqualTo(groupId);
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students;
+    }
+
+    @Override
+    public List<Student> selectByTeaIdAndPage(Integer teaId, Integer start, Integer pageSize) {
+        List<Student> students = studentMapper.selectByTeaIdAndPage(teaId, start, pageSize);
+        return students;
+    }
+
+    @Override
+    public List<Student> selectByTeaIdAndGroupId(Integer teaId, Integer groupId) {
+        StudentExample studentExample=new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andTeaidEqualTo(teaId);
+        criteria.andGroupidEqualTo(groupId);
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students;
+    }
+
+    @Override
+    public List<Student> selectByStuIdAndTeaId(Integer stuId, Integer teaId) {
+        StudentExample studentExample =new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andStuidEqualTo(stuId);
+        criteria.andTeaidEqualTo(teaId);
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students;
+    }
+
+    @Override
+    public int updateGroupAndTopicByStuId(Integer stuId, Integer isgroupLeader, Integer groupId, Integer topicId) {
+        int i = studentMapper.updateGroupAndTopicByStuId(stuId, isgroupLeader, groupId, topicId);
+        return i;
+    }
 }

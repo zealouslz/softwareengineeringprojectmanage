@@ -52,37 +52,42 @@
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<h3>单独添加</h3>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/addSingleStudent}" method="post">
-						<!--发送put请求修改员工数据-->
-						<!--
-						1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
-						2、页面创建一个post表单
-						3、创建一个input项，name="_method";值就是我们指定的请求方式
-						-->
-						<div class="form-group">
-							<label>学号:</label>
-							<input name="stuid" type="number" class="form-control" placeholder="2016123***" >
+					<form th:action="@{/addSingleStudent}" class="form-horizontal" method="post">
+
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuid"><strong>学号:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input name="stuid" id="stuid" type="number" class="form-control" placeholder="2016123***" >
+							</div>
 						</div>
-						<div class="form-group">
-							<label>姓名:</label>
-							<input name="stuname" type="text" class="form-control" placeholder="张三" >
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuname"><strong>姓名:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input name="stuname" id="stuname" type="text" class="form-control" placeholder="张三" >
+							</div>
 						</div>
-						<div class="form-group">
-							<label>密码:</label>
-							<input name="password" type="text" class="form-control" placeholder="123456" >
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="password"><strong>密码:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input name="password" id="password" type="text" class="form-control" placeholder="123456" >
+							</div>
 						</div>
-						<div class="form-group">
+						<div class="row form-group">
 							<!--提交的是部门的id-->
-							<label>班级:</label>
-							<select class="form-control" name="classid" >
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="classid"><strong>班级:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<select class="form-control" name="classid" id="classid">
 								<option th:selected="${clazz!=null}" th:value="${clazz.id}" th:each="clazz:${clazzes}" th:text="${clazz.classname}">1</option>
 							</select>
+							</div>
 						</div>
-						<div class="form-group">
-							<label>指导教师:</label>
-							<select class="form-control" name="teaid">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="teaid"><strong>指导教师:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<select class="form-control" name="teaid" id="teaid">
 								<option th:selected="${teacher!=null}" th:value="${teacher.id}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
 							</select>
+							</div>
 						</div>
 						<p style="color: red" th:text="${addIsSuccess}" th:if="${not #strings.isEmpty(addIsSuccess)}"></p>
 						<button type="submit" class="btn btn-primary" >添加</button>
@@ -104,7 +109,7 @@
 		<!-- Bootstrap core JavaScript
     ================================================== -->
 		<!-- Placed at the end of the document so the pages load faster -->
-		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.3.1/jquery.js}"></script>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
 		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/popper.js}"></script>
 		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
 

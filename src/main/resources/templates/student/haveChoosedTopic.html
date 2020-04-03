@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>Admin</title>
+		<title>你的选题</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -48,41 +48,60 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#adminsidebar(activeUri='teacherImport')"></div>
+				<div th:replace="commons/bar::#studentsidebar(activeUri='yourtopic')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h3>单独添加</h3>
-					<form th:action="@{/addSingleTeacher}" class="form-horizontal" method="post">
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:right;margin-top:5px;cursor:pointer" for="teaid"><strong>工号:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input name="teaid" id="teaid" type="number" class="form-control" placeholder="2016123***" >
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="teaname"><strong>姓名:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input name="teaname" id="teaname" type="text" class="form-control" placeholder="张三" >
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="password"><strong>密码:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input name="password" id="password" type="text" class="form-control" placeholder="123456" >
-							</div>
-						</div>
-						<p style="color: red" th:text="${addIsSuccess}" th:if="${not #strings.isEmpty(addIsSuccess)}"></p>
-						<button type="submit" class="btn btn-primary" >添加</button>
-						<button type="reset"  class="btn btn-primary">重置</button>
-					</form>
-					<br><br>
-					<h3>文件导入</h3>
-					<h4 th:inlines="text">文件上传</h4>
-					<form method="post" enctype="multipart/form-data" id="form" action="/uploadTea">
-						<input type="file" name="filename"/>
-						<input type="submit" value="提交上传"/>
-						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
-					</form>
+					<p style="color: red" th:text="${isChooseSuccess}" th:if="${not #strings.isEmpty(isChooseSuccess)}"></p>
+					<div class="table-responsive">
+						<table class="table table-striped table-sm">
+							<tr>
+								<td>选题id</td>
+								<td th:text="${topic.id}"></td>
+							</tr>
+							<tr>
+								<td>选题名</td>
+								<td th:text="${topic.topicname}"></td>
+							</tr>
+							<tr>
+								<td>选题描述</td>
+								<td th:text="${topic.topicdescribe}"></td>
+							</tr>
+							<tr>
+								<td>参考文档</td>
+								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
+							</tr>
+							<tr>
+								<td>指导教师</td>
+								<td th:text="${teacher.teaname}"></td>
+							</tr>
+							<tr>
+								<td>发布时间</td>
+								<td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm')}"></td>
+							</tr>
+							<tr>
+								<td>截止时间</td>
+								<td th:text="${#dates.format(topic.deadline,'yyyy-MM-dd HH:mm')}"></td>
+							</tr>
+							<tr>
+								<td>选题截止时间</td>
+								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm')}"></td>
+							</tr>
+                            <tr th:if="${student.isgroupleader}==1">
+                                <td>提交最终报告</td>
+								<td>
+									<form method="post" enctype="multipart/form-data"  action="/uploadResult">
+										<input type="file" name="filename"/>
+										<input type="submit" value="提交上传"/>
+									</form>
+								</td>
+							</tr>
+						</table>
 
+						<form th:action="@{/choosetopic}" class="form-horizontal" method="post">
+							<input type="hidden" name="stuId" th:value="${student.getId()}">
+							<input type="hidden" name="page" th:value="1">
+							<button type="submit" class="btn btn-primary" onclick="return foo('是否确定放弃当前选题？重新选择？')">重新选择</button>
+						</form>
+					</div>
 				</main>
 			</div>
 		</div>
@@ -98,6 +117,12 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+			function foo(msg){
+				if(confirm(msg)){
+					return true;
+				}
+				return false;
+			}
 		</script>
 
 		<!-- Graphs -->

@@ -88,6 +88,7 @@ public class LoginController {
                     if (student.getPassword().equals(password)) {
                         session.setAttribute("loginUser", student.getStuname());
                         session.setAttribute("stuId",student.getId());
+                        session.setAttribute("student",student);
                         return "redirect:/studentmain.html";
                     } else {
                         redirectAttributes.addFlashAttribute("error", "学生密码错误");

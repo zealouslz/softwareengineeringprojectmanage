@@ -1,28 +1,33 @@
 package com.zeal.softwareengineeringprojectmanage.controller;
 
-import com.zeal.softwareengineeringprojectmanage.bean.Page;
-import com.zeal.softwareengineeringprojectmanage.bean.Teacher;
-import com.zeal.softwareengineeringprojectmanage.bean.Topic;
+import com.zeal.softwareengineeringprojectmanage.bean.*;
+import com.zeal.softwareengineeringprojectmanage.service.ClazzService;
+import com.zeal.softwareengineeringprojectmanage.service.StudentService;
 import com.zeal.softwareengineeringprojectmanage.service.TeacherService;
 import com.zeal.softwareengineeringprojectmanage.service.TopicService;
 import org.apache.commons.io.FileUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.swing.event.ListDataEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class TeacherController {
@@ -31,6 +36,10 @@ public class TeacherController {
     TopicService topicService;
     @Autowired
     TeacherService teacherService;
+    @Autowired
+    StudentService studentService;
+    @Autowired
+    ClazzService clazzService;
     @Value("${file.uploadFolder}")
     private String uploadPath; //文件上传的地址
     @RequestMapping("/manageTopic")
@@ -196,5 +205,205 @@ public class TeacherController {
         int i = topicService.deleteByPrimary(id);
         String isUpdateSuccess="成功删除了"+i+"条选题";
         return "redirect:/manageTopic?currentUser="+topic.getTeaid()+"&page=1&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+    }
+
+    @RequestMapping("/viewChooseDetail")
+    public String viewChoooseDetail(Integer currentUser,Integer page,Model model){
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(5);
+        p.setTotalUsers(topicService.selectByTeaIdAddDeadline(currentUser).size());
+        List<Topic> topics = topicService.selectByTeaIdAddDeadlineAndPage(currentUser,(page - 1) * p.getPageSize(), p.getPageSize());
+        List<Student> students = studentService.selectByTeaId(currentUser);
+        List<Integer> allCanChoosedTopicId=new ArrayList<>();
+        List<Integer> allStuHaveChoosedTopicId= new ArrayList<>();
+        for(Topic topic:topics){
+            allCanChoosedTopicId.add(topic.getId());
+        }
+        List<ChoosedTopic> choosedTopics = studentService.haveChoosedTopic();
+        for(ChoosedTopic choosedTopic:choosedTopics){
+            allStuHaveChoosedTopicId.add(choosedTopic.getTopicId());
+        }
+
+        for (Integer i:allCanChoosedTopicId){
+            if(!allStuHaveChoosedTopicId.contains(i)){
+                ChoosedTopic choosedTopic = new ChoosedTopic();
+                choosedTopic.setTopicId(i);
+                choosedTopic.setCount(0);
+                choosedTopics.add(choosedTopic);
+            }
+        }
+        model.addAttribute("topics",topics);
+        model.addAttribute("page",p);
+        model.addAttribute("students",students);
+        model.addAttribute("choosedTopics",choosedTopics);
+        model.addAttribute("currentUser",currentUser);
+        return "teacher/viewChooseDetail";
+    }
+
+    @RequestMapping("/confirmGroup/{id}")
+    public String confirmGroup(@PathVariable("id") Integer topicId,Model model){
+        List<Student> students = studentService.selectByTopicId(topicId);
+        model.addAttribute("students",students);
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        model.addAttribute("topic",topic);
+        StringBuilder  confirmMsg=new StringBuilder();
+        for(Student student:students){
+            confirmMsg.append(student.getStuname());
+            confirmMsg.append("、");
+        }
+        if (confirmMsg.length() > 0) {
+            model.addAttribute("confirmMsg",confirmMsg.toString().substring(0,confirmMsg.length()-1));
+        }
+        else {
+            model.addAttribute("confirmMsg",confirmMsg.toString());
+        }
+        return "teacher/confirmGroup";
+    }
+
+    @RequestMapping(value = "/setStuGroup")
+    @ResponseBody
+    public String setStuGroup(HttpServletRequest request,HttpServletResponse response) throws JSONException, IOException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int groupId = Integer.parseInt(request.getParameter("groupId"));
+        List<Student> students1 = studentService.selectByGroupId(groupId);
+        JSONObject object=new JSONObject();
+        if(students1.size()!=0){
+            String msg = "组号"+groupId+"已被分配，请重新输入";   //设置Json对象的属性
+            object.put("code",-1);
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            int groupLeader = Integer.parseInt(request.getParameter("groupLeader"));
+            Student student1 = studentService.selectByPrimaryKey(groupLeader);
+            int updateGroupId = studentService.updateGroupIdByTopicId(id, groupId);
+            int updateGroupLeader = studentService.updateGroupLeader(groupLeader);
+            List<Student> students = studentService.selectByTopicId(id);
+            StringBuilder confirmMsg = new StringBuilder();
+            for (Student student : students) {
+                confirmMsg.append(student.getStuname());
+                confirmMsg.append("、");
+            }
+            //创建Json对象
+            if (updateGroupId > 0 & updateGroupLeader > 0) {
+                String msg = "成功将" + confirmMsg.toString().substring(0, confirmMsg.length() - 1) + "分为第" + groupId + "组；组长为" + student1.getStuname();   //设置Json对象的属性
+                object.put("code",1);
+                object.put("msg",msg);
+                return object.toString();
+
+            } else {
+                String msg = "分组失败，请重新尝试";   //设置Json对象的属性
+                object.put("code",-1);
+                object.put("msg",msg);
+                return object.toString();
+            }
+        }
+    }
+
+    @RequestMapping(value = "/stopTopic")
+    @ResponseBody
+    public String stopTopic(HttpServletRequest request,HttpServletResponse response) throws JSONException, IOException {
+        int topicId = Integer.parseInt(request.getParameter("topicId"));
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        int i = topicService.deleteByPrimary(topicId);
+        if(i>0){
+            String msg =topic.getTopicname()+"已停开!!";
+            System.out.println(msg);
+            return msg;
+
+        }else {
+            String msg = "停开失败，请重新尝试";   //设置Json对象的属性
+            System.out.println(msg);
+            return msg;
+        }
+    }
+
+    @RequestMapping("/manageGroupAndTopic")
+    public String manageGroupAndTopic(Integer currentUser,Integer page,Model model){
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(10);
+        p.setTotalUsers(studentService.selectByTeaId(currentUser).size());
+        List<Student> students = studentService.selectByTeaIdAndPage(currentUser, (page - 1) * p.getPageSize(), p.getPageSize());
+        List<Clazz> clazzes = clazzService.selectAll();
+        Teacher teacher = teacherService.selectByPrimayKey(currentUser);
+        model.addAttribute("teacher",teacher);
+        model.addAttribute("clazzes",clazzes);
+        model.addAttribute("page",p);
+        model.addAttribute("students",students);
+        return "teacher/manageGroupAndTopic";
+    }
+
+    @RequestMapping("/selectStudentByGroup")
+    public String selectStudentByGroup(Integer groupId,Integer currentUser,Model model){
+        List<Student> students = studentService.selectByTeaIdAndGroupId(currentUser, groupId);
+        if (students.size()==0)
+        {
+            model.addAttribute("isSelectSuccess","您输入的组号不存在");
+        }
+        model.addAttribute("students",students);
+        Teacher teacher = teacherService.selectByPrimayKey(currentUser);
+        model.addAttribute("teacher",teacher);
+        List<Clazz> clazzes = clazzService.selectAll();
+        model.addAttribute("clazzes",clazzes);
+        return "teacher/manageGroupAndTopic";
+
+    }
+
+    @RequestMapping("/selectStudentByStuId")
+    public String selectStudentByStuId(Integer stuId,Integer currentUser,Model model){
+        List<Student> students = studentService.selectByStuIdAndTeaId(stuId,currentUser);
+        if (students.size()==0)
+        {
+            model.addAttribute("isSelectSuccess","您输入的学号不存在，或者指导教师不是你");
+        }
+        model.addAttribute("students",students);
+        Teacher teacher = teacherService.selectByPrimayKey(currentUser);
+        model.addAttribute("teacher",teacher);
+        List<Clazz> clazzes = clazzService.selectAll();
+        model.addAttribute("clazzes",clazzes);
+        return "teacher/manageGroupAndTopic";
+    }
+
+    @RequestMapping("/getStuGroupAndTopicDetail/{stuid}")
+    public String updateStu(@PathVariable("stuid") Integer stuid,Model model){
+        Student student = studentService.selectByStuId(stuid);
+        model.addAttribute("student",student);
+        List<Clazz> clazzes = clazzService.selectAll();
+        model.addAttribute("clazzes",clazzes);
+        Teacher teacher = teacherService.selectByPrimayKey(student.getTeaid());
+        model.addAttribute("teacher",teacher);
+        return "teacher/updateStuGroupAndTopic";
+    }
+
+    @RequestMapping("/updateStuGroupAndTopicByStuId")
+    @ResponseBody
+    public String updateStuGroupAndTopicByStuId(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int stuid = Integer.parseInt(request.getParameter("stuid"));
+        int isgroupleader = Integer.parseInt(request.getParameter("isgroupleader"));
+        int groupid = Integer.parseInt(request.getParameter("groupid"));
+        int topicid = Integer.parseInt(request.getParameter("topicid"));
+        List<Student> students = studentService.selectByGroupId(groupid);
+        Topic topic = topicService.selectByPrimaryKey(topicid);
+        JSONObject object=new JSONObject();
+        if(students.size()==0||topic==null){
+            object.put("code",-1);
+            object.put("msg","您所填写的组号或选题号不存在，请重新输入！！");
+            return object.toString();
+        }else {
+        int i = studentService.updateGroupAndTopicByStuId(stuid, isgroupleader, groupid, topicid);
+        Student student = studentService.selectByStuId(stuid);
+        if (i>0){
+            object.put("code",1);
+            String msg="成功将"+student.getStuname()+"的组号改为"+student.getGroupid()+";选题号为"+student.getTopicid();
+            object.put("msg",msg);
+            return object.toString();
+        }
+          else {
+            object.put("code",-1);
+            object.put("msg","修改失败，请重新尝试！！");
+            return object.toString();
+        }
+    }
     }
 }

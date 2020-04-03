@@ -14,5 +14,7 @@ public interface TopicService {
     int updateByPrimaryKey(Topic topic);
     int deleteByPrimary(Integer id);
     List<Topic> selectByTeaIdAddChooseDeadline(Integer teacherId);
+    List<Topic> selectByTeaIdAddDeadline(Integer teacherId);
     List<Topic> selectByTeaIdAddChooseDeadlineAndPage(Integer teaId,Integer start,Integer pageSize);
+    List<Topic> selectByTeaIdAddDeadlineAndPage(Integer teaId,Integer start,Integer pageSize);
 }

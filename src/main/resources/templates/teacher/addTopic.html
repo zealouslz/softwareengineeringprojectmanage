@@ -53,37 +53,51 @@
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<h3>请填写选题信息</h3>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/addSingleTopic}" method="post" enctype="multipart/form-data">
-						<div class="form-group">
-							<label>选题名：</label>
-							<input name="topicname" type="text" class="form-control" placeholder="***管理系统" >
+					<form th:action="@{/addSingleTopic}" class="form-horizontal" method="post" enctype="multipart/form-data">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input name="topicname" id="topicname" type="text" class="form-control" placeholder="***管理系统" >
+							</div>
 						</div>
-						<div class="form-group">
-							<label>选题描述:</label>
-							<textarea name="topicdescribe" rows="6" class="form-control" placeholder="该系统需要完成****" ></textarea>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicdescribe"><strong>选题描述:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<textarea name="topicdescribe"  id="topicdescribe" rows="6" class="form-control" placeholder="该系统需要完成****" ></textarea>
+							</div>
 						</div>
-						<div class="form-group">
-							<label>参考文档:</label>
-							<input type="file" name="file" ><br>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="file"><strong>参考文档:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input type="file" id="file"  name="file" ><br>
+							</div>
 						</div>
-						<div class="form-group">
-							<label>指导教师:</label>
-							<input name="teaid" type="text"  th:text="${teacher.teaname}" th:value="${teacher.id}"   th:readonly="true">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="teaid"><strong>指导教师:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input name="teaid" id="teaid" class="form-control" type="text"  th:text="${teacher.teaname}" th:value="${teacher.id}"   th:readonly="true">
+							</div>
 						</div>
-						<div>
-							<label>截止时间：</label>
-							<input type="datetime-local" name="deadline" >
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="deadline"><strong>截止时间：</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input type="datetime-local" class="form-control" name="deadline" id="deadline" >
+							</div>
 						</div>
-						<div>
-							<label>选题截止时间：</label>
-							<input type="datetime-local" name="choosedeadline" >
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="choosedeadline"><strong>选题截止时间：</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input type="datetime-local" class="form-control" name="choosedeadline" id="choosedeadline" >
+							</div>
 						</div>
-						<div class="form-group">
-							<label>人数上限：</label>
-							<input type="number" name="maxsize">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="maxsize"><strong>人数上限：</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input type="number" class="form-control" name="maxsize" id="maxsize">
+							</div>
 						</div>
 						<button type="submit" class="btn btn-primary" >添加</button>
-						<button type="reset"  class="btn btn-primary">重置</button>
+						<button  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</button>
 					</form>
 				</main>
 
@@ -93,7 +107,7 @@
 		<!-- Bootstrap core JavaScript
     ================================================== -->
 		<!-- Placed at the end of the document so the pages load faster -->
-		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.3.1/jquery.js}"></script>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
 		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/popper.js}"></script>
 		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
 
@@ -151,7 +165,7 @@
 				var changeUrl = 'http://api.map.baidu.com/geoconv/v1/?coords=' + latlon + '&from=1&to=5&ak=lRRyy6qoBwnAgj3w4ugGFqoSsWC8du3v';
 				$.ajax({
 					type: "GET",
-					dataType: "jsonp",
+					dataType: "json",
 					url: changeUrl,
 					success: function (json) {
 						if (json.status == 0) {

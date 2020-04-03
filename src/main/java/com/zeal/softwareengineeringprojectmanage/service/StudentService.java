@@ -21,4 +21,13 @@ public interface StudentService {
     List<Student> selectAll();
     List<ChoosedTopic> haveChoosedTopic();
     int updateTopicIdByStuId(Integer topicId,Integer stuId);
+    List<Student> selectByTeaId(Integer teaId);
+    List<Student> selectByTopicId(Integer topicId);
+    int updateGroupIdByTopicId(Integer topicId,Integer groupId);
+    int updateGroupLeader(Integer id);
+    List<Student> selectByGroupId(Integer groupId);
+    List<Student> selectByTeaIdAndPage(Integer teaId,Integer start,Integer pageSize);
+    List<Student> selectByTeaIdAndGroupId(Integer teaId,Integer groupId);
+    List<Student> selectByStuIdAndTeaId(Integer stuId,Integer teaId);
+    int updateGroupAndTopicByStuId(Integer stuId,Integer isgroupLeader,Integer groupId,Integer topicId);
 }

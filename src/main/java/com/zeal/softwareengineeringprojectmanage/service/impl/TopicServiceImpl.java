@@ -63,8 +63,21 @@ public class TopicServiceImpl implements TopicService {
     }
 
     @Override
+    public List<Topic> selectByTeaIdAddDeadline(Integer teacherId) {
+        List<Topic> topics = topicMapper.selectByTeaIdAddDeadline(teacherId);
+        return topics;
+    }
+
+
+    @Override
     public List<Topic> selectByTeaIdAddChooseDeadlineAndPage(Integer teaId, Integer start, Integer pageSize) {
         List<Topic> topics = topicMapper.selectByTeaIdAddChooseDeadlineAndPage(teaId, start, pageSize);
+        return topics;
+    }
+
+    @Override
+    public List<Topic> selectByTeaIdAddDeadlineAndPage(Integer teaId, Integer start, Integer pageSize) {
+        List<Topic> topics = topicMapper.selectByTeaIdAddDeadlineAndPage(teaId, start, pageSize);
         return topics;
     }
 }

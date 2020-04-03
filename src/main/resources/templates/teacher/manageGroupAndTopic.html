@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>选题</title>
+		<title>Admin</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -48,76 +48,92 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#studentsidebar(activeUri='choosetopic')"></div>
+				<div th:replace="commons/bar::#teachersidebar(activeUri='manageGroupAndTopic')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<p style="color: red" th:text="${isSuccess}" th:if="${not #strings.isEmpty(isSuccess)}"></p>
-					<div class="table-responsive">
+					<!--需要区分是员工修改还是添加；-->
+					<form th:action="@{/selectStudentByGroup}" class="form-horizontal" method="post">
+						<div class="row form-group">
+							<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="groupId"><strong>按组号查询:</strong></label>
+							<div class="col-lg-5 col-md-6">
+                                <input id="groupId" name="groupId" type="number" class="form-control" placeholder="请输入你需要查询的组号">
+                                <input type="hidden" name="currentUser" th:value="${teacher.id}">
+							</div>
+							<button type="submit" class="btn btn-primary" >查询</button>
+						</div>
+					</form>
+                    <form th:action="@{/selectStudentByStuId}" class="form-horizontal" method="post">
+                        <div class="row form-group">
+                            <label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="stuId"><strong>按学号查询:</strong></label>
+                            <div class="col-lg-5 col-md-6">
+                                <input id="stuId" name="stuId" class="form-control" type="number" placeholder="请输入学生的学号">
+                                <input type="hidden" name="currentUser" th:value="${teacher.id}">
+                            </div>
+                            <button type="submit" class="btn btn-primary" >查询</button>
+                        </div>
+                    </form>
+                    <p style="color: red" th:text="${isSelectSuccess}" th:if="${not #strings.isEmpty(isSelectSuccess)}"></p>
+					<div class="table-responsive" th:if="${students}!=null">
 						<table class="table table-striped table-sm">
 							<thead>
 							<tr>
-								<th>id</th>
-								<th>选题名</th>
-								<th>选题描述</th>
-								<th>参考文档</th>
+								<th>学号</th>
+								<th>姓名</th>
+								<th>班级</th>
 								<th>指导教师</th>
-								<th>发布时间</th>
-								<th>截止时间</th>
-								<th>选题截止时间</th>
-								<th>已选人数</th>
+								<th>是否组长</th>
+								<th>组号</th>
+								<th>选题号</th>
 								<th>操作</th>
 							</tr>
 							</thead>
 							<tbody>
-							<tr th:each="topic:${topics}" >
-								<td th:text="${topic.id}"></td>
-								<td th:text="${topic.topicname}"></td>
-								<td th:text="${#strings.abbreviate(topic.topicdescribe,10)}"></td>
-								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
-								<td th:text="${teacher.teaname}" th:value="${teacher.id}"></td>
-								<td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm')}"></td>
-								<td th:text="${#dates.format(topic.deadline,'yyyy-MM-dd HH:mm')}"></td>
-								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm')}"></td>
-								<td th:text="${choosedTopic.count}+'/'+${topic.maxsize}" th:each="choosedTopic:${choosedTopics}" th:if="${choosedTopic.topicId}==${topic.id}"></td>
+							<tr th:each="student:${students}">
+								<td th:text="${student.stuid}"></td>
+								<td th:text="${student.stuname}"></td>
+								<td th:text="${clazz.classname}" th:each="clazz:${clazzes}" th:if="${clazz.id}==${student.classid}" th:value="${clazz.id}"></td>
+								<td th:text="${teacher.teaname}" ></td>
+								<td th:text="${student.isgroupleader==1}?'是':'否'"></td>
+								<td th:text="${student.groupid}"></td>
+								<td th:text="${student.topicid}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:each="choosedTopic:${choosedTopics}" th:if="${choosedTopic.topicId}==${topic.id}and${choosedTopic.count<topic.maxsize}" th:href="@{/confirmChooseTopic}+'?topicId='+${topic.id}+'&stuId='+${session.stuId}"  th:onclick="return foo('确认选择'+[[${teacher.teaname}]]+'老师的'+[[${topic.topicname}]]+'吗？')" >选择</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getStuGroupAndTopicDetail/}+${student.stuid}">修改</a>
 								</td>
 							</tr>
 							</tbody>
 						</table>
-						<table  th:if="${page!=null}">
+						<table style="margin: auto" th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/manageGroupAndTopic}">
 									<td><input type="hidden" name="page" th:value="1"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
-									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
+									<td><input type="hidden" name="currentUser" th:value="${teacher.id}"></td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/manageGroupAndTopic}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${teacher.id}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/manageGroupAndTopic}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${teacher.id}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
+								<form  th:action="@{/manageGroupAndTopic}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
+									<td><input type="hidden" name="currentUser" th:value="${teacher.id}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/choosetopic(isSuccess=null)}">
-									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
-									<td><input type="hidden" name="stuId" th:value="${session.stuId}"></td>
-									<td><input type="submit" value="确定"></td>
+								<form  th:action="@{/manageGroupAndTopic}">
+											<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
+											<td><input type="hidden" name="currentUser" th:value="${teacher.id}"></td>
+											<td><input type="submit" value="确定"></td>
 								</form>
 							</tr>
 						</table>
-					</div>
 
+					</div>
 				</main>
 			</div>
 		</div>
@@ -133,12 +149,6 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
-			function foo(teaname){
-				if(confirm(teaname)){
-					return true;
-				}
-				return false;
-			}
 		</script>
 
 		<!-- Graphs -->

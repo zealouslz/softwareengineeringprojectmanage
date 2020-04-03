@@ -246,7 +246,7 @@ public class AdminController {
     }
 
     @RequestMapping("/addClass")
-    public String addClass(Model model){
+    public String addClass(Model model,HttpSession session){
         List<Teacher> teachers = teacherService.selectAll();
         model.addAttribute("teachers",teachers);
         return "admin/addClass";
