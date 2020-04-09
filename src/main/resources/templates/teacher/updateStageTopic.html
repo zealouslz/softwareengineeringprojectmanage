@@ -8,7 +8,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>更新选题信息</title>
+		<title>更新阶段性任务</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -53,32 +53,32 @@
 				<div th:replace="commons/bar::#teachersidebar"></div>
 
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
+					<h3>请在以下区域做出修改</h3>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/updateTopicById}" class="form-horizontal" method="post" enctype="multipart/form-data">
+					<form th:action="@{/updateStageTopicById}" class="form-horizontal" method="post" enctype="multipart/form-data">
 
 						<div class="row form-group ">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="id"><strong>选题id:</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="id"><strong>id:</strong></label>
                             <div class="col-lg-5 col-md-6">
-							<input id="id" name="id" type="text" class="form-control" placeholder="12" th:value="${topic!=null}?${topic.id}" th:readonly="true">
+							<input id="id" name="id" type="text" class="form-control" placeholder="12" th:value="${stagetopic!=null}?${stagetopic.id}" th:readonly="true">
                             </div>
                         </div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="name"><strong>任务名：</strong></label>
                             <div class="col-lg-5 col-md-6">
-							<input id="topicname" name="topicname" type="text" class="form-control"  th:value="${topic!=null}?${topic.topicname}" >
+							<input id="name" name="name" type="text" class="form-control"  th:value="${stagetopic!=null}?${stagetopic.stagename}" >
                             </div>
                         </div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" for="topicdescribe"><strong>选题描述：</strong></label>
+							<label class="control-label col-lg-1" for="describe"><strong>任务描述：</strong></label>
                             <div class="col-lg-5 col-md-6">
-                                <textarea id="topicdescribe" name="topicdescribe" type="text" class="form-control" rows="6" th:text="${topic.topicdescribe}" ></textarea>
+                                <textarea id="describe" name="describe" type="text" class="form-control" rows="6" th:text="${stagetopic.stagedescribe}" ></textarea>
                             </div>
                         </div>
 						<div class="row form-group">
 							<label class="control-label col-lg-1" for="downloadlink"><strong>参考文档：</strong></label>
                             <div class="col-lg-5 col-md-6">
-							<input id="downloadlink" name="downloadlink" type="text" class="form-control"  th:value="${topic!=null}?${topic.downloadlink}" th:readonly="true">
+							<input id="downloadlink" name="downloadlink" type="text" class="form-control"  th:value="${stagetopic!=null}?${stagetopic.downloadlink}" th:readonly="true">
 						    </div>
                         </div>
 						<div class="row form-group">
@@ -94,25 +94,20 @@
 						    </div>
                         </div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" for="deadline"><strong>截止时间：</strong></label>
+							<label class="control-label col-lg-1" for="releaseTime"><strong>发布时间：</strong></label>
                             <div class="col-lg-5 col-md-6">
-							<input id="deadline" name="deadline" class="form-control" type="datetime-local"  th:value="${#dates.format(topic.deadline,'yyyy-MM-dd')+'T'}+${#dates.format(topic.deadline,'HH:mm')}" >
+							<input id="releaseTime" name="releaseTime" class="form-control" type="datetime-local"  th:value="${#dates.format(stagetopic.releasetime,'yyyy-MM-dd')+'T'}+${#dates.format(stagetopic.releasetime,'HH:mm')}" >
 						    </div>
                         </div>
                         <div class="row form-group">
-                            <label class="control-label col-lg-1" for="choosedeadline"><strong>选题截止时间：</strong></label>
+                            <label class="control-label col-lg-1" for="deadline"><strong>截止时间：</strong></label>
                             <div class="col-lg-5 col-md-6">
-                            <input id="choosedeadline" name="choosedeadline" class="form-control" type="datetime-local"  th:value="${#dates.format(topic.choosedeadline,'yyyy-MM-dd')+'T'}+${#dates.format(topic.choosedeadline,'HH:mm')}" >
+                            <input id="deadline" name="deadline" class="form-control" type="datetime-local"  th:value="${#dates.format(stagetopic.deadline,'yyyy-MM-dd')+'T'}+${#dates.format(stagetopic.deadline,'HH:mm')}" >
                             </div>
                         </div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" for="maxsize"><strong>人数上限：</strong></label>
-                            <div class="col-lg-5 col-md-6">
-							<input id="maxsize" name="maxsize" class="form-control" type="number" th:value="${topic!=null}?${topic.maxsize}">
-						    </div>
-                        </div>
-						<button type="submit" class="btn btn-primary">修改</button>
-						<button  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</button>
+						<button type="submit" class="btn btn-primary" onclick="return foo('确认修改该阶段性任务吗？')">修改</button>
+						<a href="#" onClick="javascript:history.back(-1);">返回</a>
+						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
 					</form>
 				</main>
 			</div>
@@ -129,6 +124,12 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+			function foo(teaname){
+				if(confirm(teaname)){
+					return true;
+				}
+				return false;
+			}
 		</script>
 	</body>
 

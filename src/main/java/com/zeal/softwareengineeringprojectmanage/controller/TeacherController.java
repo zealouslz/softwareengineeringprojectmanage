@@ -1,10 +1,7 @@
 package com.zeal.softwareengineeringprojectmanage.controller;
 
 import com.zeal.softwareengineeringprojectmanage.bean.*;
-import com.zeal.softwareengineeringprojectmanage.service.ClazzService;
-import com.zeal.softwareengineeringprojectmanage.service.StudentService;
-import com.zeal.softwareengineeringprojectmanage.service.TeacherService;
-import com.zeal.softwareengineeringprojectmanage.service.TopicService;
+import com.zeal.softwareengineeringprojectmanage.service.*;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.jws.WebParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.swing.event.ListDataEvent;
@@ -39,9 +37,13 @@ public class TeacherController {
     @Autowired
     StudentService studentService;
     @Autowired
+    StagetopicService stagetopicService;
+    @Autowired
     ClazzService clazzService;
-    @Value("${file.uploadFolder}")
-    private String uploadPath; //文件上传的地址
+    @Value("${file.uploadTopicFolder}")
+    private String uploadTopicFilePath; //选题文件上传的地址
+    @Value("${file.uploadStageTopicFolder}")
+    private String uploadStageTopicFilePath; //选题文件上传的地址
     @RequestMapping("/manageTopic")
     public String manageTopic(Integer currentUser,Integer page,String isUpdateSuccess, Model model){
         Page p=new Page();
@@ -87,11 +89,11 @@ public class TeacherController {
             topic.setChoosedeadline(date2);
             topic.setMaxsize(maxsize);
             Date date=new Date();
-            File dir = new File(uploadPath);
+            File dir = new File(uploadTopicFilePath);
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = uploadPath + file.getOriginalFilename();
+            String path = uploadTopicFilePath + file.getOriginalFilename();
             topic.setDownloadlink(path);
             topic.setReleasetime(date);
             File tempFile = null;
@@ -179,11 +181,11 @@ public class TeacherController {
         topic.setChoosedeadline(date3);
         topic.setDeadline(date);
         topic.setMaxsize(maxsize);
-        File dir = new File(uploadPath);
+        File dir = new File(uploadTopicFilePath);
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = uploadPath + file.getOriginalFilename();
+        String path = uploadTopicFilePath + file.getOriginalFilename();
         topic.setDownloadlink(path);
         File tempFile = null;
         try {
@@ -199,12 +201,22 @@ public class TeacherController {
         return "redirect:/manageTopic?currentUser="+teaid+"&page=1&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
     }
 
-    @RequestMapping("/updateTopic/delete/{id}")
-    public String deleteTopicById(@PathVariable("id") Integer id) throws UnsupportedEncodingException {
-        Topic topic = topicService.selectByPrimaryKey(id);
+    @RequestMapping("/updateTopic/delete/")
+    @ResponseBody
+    public String deleteTopicById(HttpServletRequest request,HttpServletResponse response) throws UnsupportedEncodingException, JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
         int i = topicService.deleteByPrimary(id);
-        String isUpdateSuccess="成功删除了"+i+"条选题";
-        return "redirect:/manageTopic?currentUser="+topic.getTeaid()+"&page=1&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
+        JSONObject object = new JSONObject();
+        if(i>0) {
+            object.put("code",1);
+            String msg="成功删除了"+i+"条选题";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            object.put("msg","修改失败，请重新尝试！！");
+            return object.toString();
+        }
     }
 
     @RequestMapping("/viewChooseDetail")
@@ -304,17 +316,18 @@ public class TeacherController {
     @ResponseBody
     public String stopTopic(HttpServletRequest request,HttpServletResponse response) throws JSONException, IOException {
         int topicId = Integer.parseInt(request.getParameter("topicId"));
-        Topic topic = topicService.selectByPrimaryKey(topicId);
         int i = topicService.deleteByPrimary(topicId);
+        JSONObject object = new JSONObject();
         if(i>0){
-            String msg =topic.getTopicname()+"已停开!!";
-            System.out.println(msg);
-            return msg;
-
+            object.put("code",1);
+            String msg="id为"+topicId+"的选题已停开";
+            object.put("msg",msg);
+            return object.toString();
         }else {
+            object.put("code",-1);
             String msg = "停开失败，请重新尝试";   //设置Json对象的属性
-            System.out.println(msg);
-            return msg;
+            object.put("msg",msg);
+            return object.toString();
         }
     }
 
@@ -405,5 +418,177 @@ public class TeacherController {
             return object.toString();
         }
     }
+    }
+
+    @RequestMapping("/manageStageTask")
+    public String manageStageTask(Integer currentUser,Integer page,String isUpdateSuccess,Model model){
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(10);
+        p.setTotalUsers(stagetopicService.selectByTeaId(currentUser).size());
+        Teacher teacher = teacherService.selectByPrimayKey(currentUser);
+        List<Stagetopic> stagetopics = stagetopicService.selectByTeaIdAndPage(currentUser, (page - 1) * p.getPageSize(), p.getPageSize());
+        model.addAttribute("page",p);
+        model.addAttribute("stagetopics",stagetopics);
+        model.addAttribute("teacher",teacher);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        return "teacher/manageStageTask";
+    }
+
+    @RequestMapping("/addStageTopic")
+    public String addStageTopic(Integer teaId,Model model){
+        Teacher teacher = teacherService.selectByPrimayKey(teaId);
+        model.addAttribute("teacher",teacher);
+        return "teacher/addStageTopic";
+    }
+
+    @RequestMapping("/addSingleStageTopic")
+    public String addSingleStageTopic(@RequestParam("name")String name,
+                                      @RequestParam("describe") String describe,
+                                      @RequestParam("teaid") Integer teaid,
+                                      @RequestParam("deadline")String deadline,
+                                      @RequestParam("releaseTime")String releaseTime,
+                                      @RequestParam("file") MultipartFile file,Model model) throws ParseException, UnsupportedEncodingException {
+        if(!file.isEmpty()){
+            Stagetopic stagetopic =new Stagetopic();
+            stagetopic.setStagename(name);
+            stagetopic.setStagedescribe(describe);
+            stagetopic.setTeaid(teaid);
+            String[] str1 = deadline.split("[T]");
+            String[] str2 = releaseTime.split("[T]");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date date1 = simpleDateFormat.parse(str1[0]+" "+str1[1]);
+            Date date2 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+            stagetopic.setDeadline(date1);
+            stagetopic.setReleasetime(date2);
+            File dir = new File(uploadStageTopicFilePath);
+            if(!dir.exists()) {
+                dir.mkdir();
+            }
+            String path = uploadStageTopicFilePath + file.getOriginalFilename();
+            stagetopic.setDownloadlink(path);
+            File tempFile = null;
+            try {
+                tempFile =  new File(path);
+                FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+            }catch (Exception e){
+                e.printStackTrace();
+                model.addAttribute("IsSuccess","文件上传失败");
+                Teacher teacher = teacherService.selectByPrimayKey(teaid);
+                model.addAttribute("teacher",teacher);
+                return "teacher/addStageTopic";
+            }
+            int insert = stagetopicService.insert(stagetopic);
+            if(insert>0) {
+                String isUpdateSuccess = "成功发布" + insert + "选题";
+                return "redirect:/manageStageTask?currentUser=" + teaid + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
+            }else {
+                model.addAttribute("IsSuccess","阶段性任务发布失败，请重试");
+                Teacher teacher = teacherService.selectByPrimayKey(teaid);
+                model.addAttribute("teacher",teacher);
+                return "teacher/addStageTopic";
+            }
+        }else {
+            model.addAttribute("IsSuccess", "文件为空，上传失败");
+            Teacher teacher = teacherService.selectByPrimayKey(teaid);
+            model.addAttribute("teacher", teacher);
+            return "teacher/addStageTopic";
+        }
+    }
+
+    @RequestMapping("/getStageTopicDetail/{id}")
+    public String getStageTopicDetail(@PathVariable("id") Integer id,Model model){
+        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(id);
+        Teacher teacher = teacherService.selectByPrimayKey(stagetopic.getTeaid());
+        model.addAttribute("stagetopic",stagetopic);
+        model.addAttribute("teacher",teacher);
+        return "teacher/updateStageTopic";
+    }
+
+    @RequestMapping("/updateStageTopicById")
+    public String updateStageTopicById(@RequestParam("id")Integer id,
+                                  @RequestParam("name")String name,
+                                  @RequestParam("describe") String describe,
+                                  @RequestParam("teaid") Integer teaid,
+                                  @RequestParam("deadline")String deadline,
+                                  @RequestParam("releaseTime")String releaseTime,
+                                  @RequestParam("downloadlink") String downloadlink,
+                                  @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
+        if(file.isEmpty()){
+            Stagetopic stagetopic = new Stagetopic();
+            stagetopic.setId(id);
+            stagetopic.setStagename(name);
+            stagetopic.setStagedescribe(describe);
+            stagetopic.setTeaid(teaid);
+            String[] str1 = deadline.split("[T]");
+            String[] str2 = releaseTime.split("[T]");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date date2 = simpleDateFormat.parse(str1[0]+" "+str1[1]);
+            Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+            stagetopic.setDeadline(date2);
+            stagetopic.setReleasetime(date3);
+            stagetopic.setDownloadlink(downloadlink);
+            int i = stagetopicService.updateByPrimaryKey(stagetopic);
+            String isUpdateSuccess="成功更新"+i+"条选题";
+            return "redirect:/manageStageTask?currentUser=" + teaid + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
+        }
+        File deleteFile = new File(downloadlink);
+        if(deleteFile!=null){
+            //文件不为空，执行删除
+            deleteFile.delete();
+        }
+        Stagetopic stagetopic = new Stagetopic();
+        stagetopic.setId(id);
+        stagetopic.setStagename(name);
+        stagetopic.setStagedescribe(describe);
+        stagetopic.setTeaid(teaid);
+        String[] str = deadline.split("[T]");
+        String[] str2 = releaseTime.split("[T]");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date date = simpleDateFormat.parse(str[0]+" "+str[1]);
+        Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+        stagetopic.setReleasetime(date3);
+        stagetopic.setDeadline(date);
+        File dir = new File(uploadStageTopicFilePath);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
+        String path = uploadStageTopicFilePath + file.getOriginalFilename();
+        stagetopic.setDownloadlink(path);
+        File tempFile = null;
+        try {
+            tempFile =  new File(path);
+            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+        }catch (Exception e){
+            e.printStackTrace();
+            String IsSuccess="文件上传失败";
+            model.addAttribute("IsSuccess",IsSuccess);
+            Stagetopic stagetopic1 = stagetopicService.selectByPrimaryKey(id);
+            Teacher teacher = teacherService.selectByPrimayKey(stagetopic1.getTeaid());
+            model.addAttribute("stagetopic",stagetopic1);
+            model.addAttribute("teacher",teacher);
+            return "teacher/updateStageTopic";
+        }
+        int i = stagetopicService.updateByPrimaryKey(stagetopic);
+        String isUpdateSuccess="成功更新"+i+"条选题";
+        return "redirect:/manageStageTask?currentUser=" + teaid + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
+    }
+
+    @RequestMapping("/deleteStageTopic")
+    @ResponseBody
+    public String deleteStageTopic(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = stagetopicService.deleteByPrimaryKey(id);
+        JSONObject object = new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除id为"+id+"的阶段性任务";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            object.put("msg","修改失败，请重新尝试！！");
+            return object.toString();
+        }
     }
 }

@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>添加选题</title>
+		<title>上传阶段性任务</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -51,55 +51,37 @@
 				<!--引入sidebar-->
 				<div th:replace="commons/bar::#teachersidebar"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h3>请填写选题信息</h3>
+					<h3>确认信息并提交文档</h3>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/addSingleTopic}" class="form-horizontal" method="post" enctype="multipart/form-data">
+					<form th:action="@{/uploadStageFile}" class="form-horizontal" method="post" enctype="multipart/form-data">
 						<div class="row form-group">
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
 							<div class="col-lg-5 col-md-6">
-							<input name="topicname" id="topicname" type="text" class="form-control" placeholder="***管理系统" >
+							<input th:value="${topic.topicname}" name="topicname" id="topicname" type="text" class="form-control"  th:readonly="true" >
+							<input type="hidden" th:value="${topic.id}" name="topicid" id="topicid">
 							</div>
 						</div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicdescribe"><strong>选题描述:</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stagetopicname"><strong>阶段性任务名:</strong></label>
 							<div class="col-lg-5 col-md-6">
-							<textarea name="topicdescribe"  id="topicdescribe" rows="6" class="form-control" placeholder="该系统需要完成****" ></textarea>
+							<input th:value="${stagetopic.stagename}"  name="stagetopicname"  id="stagetopicname"  class="form-control" th:readonly="true"></input>
+							<input type="hidden" th:value="${stagetopic.id}" name="stagetopicid" id="stagetopicid">
 							</div>
 						</div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="file"><strong>参考文档:</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="file"><strong>提交文档:</strong></label>
 							<div class="col-lg-5 col-md-6">
 							<input type="file" id="file"  name="file" ><br>
+								<input type="hidden" th:value="${stuId}" name="stuId" id="stuId">
 							</div>
 						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="teaid"><strong>指导教师:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input name="teaid" id="teaid" class="form-control" type="text"  th:text="${teacher.teaname}" th:value="${teacher.id}"   th:readonly="true">
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="deadline"><strong>截止时间：</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input type="datetime-local" class="form-control" name="deadline" id="deadline" >
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="choosedeadline"><strong>选题截止时间：</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input type="datetime-local" class="form-control" name="choosedeadline" id="choosedeadline" >
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="maxsize"><strong>人数上限：</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input type="number" class="form-control" name="maxsize" id="maxsize">
-							</div>
-						</div>
+
 						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
-						<button type="submit" class="btn btn-primary" >添加</button>
+						<button type="submit" id="release" name="release" class="btn btn-primary" >提交</button>
+						&nbsp
 						<a href="#" onClick="javascript:history.back(-1);">返回</a>
 					</form>
+
 				</main>
 
 			</div>
@@ -116,6 +98,7 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+
 		</script>
 
 		<!-- Graphs -->
@@ -149,7 +132,8 @@
 				}
 			});
 
-			</script>
+
+		</script>
 
 	</body>
 

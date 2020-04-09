@@ -1,0 +1,90 @@
+<!doctype html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <script type="text/javascript" src="http://libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
+
+    <script src="http://api.map.baidu.com/api?v=2.0&ak=9wHSU6XIph3xjz65Z63xGVoLNSLMTV2n" type="text/javascript"></script>
+    <title>浏览器定位</title>
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+    <style type="text/css">
+        /* Chart.js */
+
+        @-webkit-keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        .chartjs-render-monitor {
+            -webkit-animation: chartjs-render-animation 0.001s;
+            animation: chartjs-render-animation 0.001s;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="row form-group ">
+        <label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="load_point"><strong>经纬度:</strong></label>
+        <div class="col-lg-5 col-md-6">
+            <input id="load_point" name="load_point" type="text" class="form-control" >
+        </div>
+    </div>
+    <div class="row form-group">
+        <label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="load_geolocation"><strong>所在位置：</strong></label>
+        <div class="col-lg-5 col-md-6">
+            <input id="load_geolocation" name="load_geolocation" type="text" class="form-control">
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+</body>
+</html>
+
+<script type="text/javascript">
+    $(function(){
+
+        $("#load_geolocation").text("正在获取位置......");
+        //创建百度地图控件
+        var geolocation = new BMap.Geolocation();
+        geolocation.enableSDKLocation();
+        geolocation.getCurrentPosition(function(r){
+            if(this.getStatus() == BMAP_STATUS_SUCCESS){
+                //以指定的经度与纬度创建一个坐标点
+                var pt = new BMap.Point(r.point.lng,r.point.lat);
+                $("#load_point").val('您的位置：'+r.point.lng+','+r.point.lat);
+                //创建一个地理位置解析器
+                var geoc = new BMap.Geocoder();
+                geoc.getLocation(pt, function(rs){//解析格式：城市，区县，街道
+                    var addComp = rs.addressComponents;
+                    $("#load_geolocation").val(addComp.city + ", " + addComp.district + ", " + addComp.street);
+                });
+            }
+            else {
+                $("#load_geolocation").text('定位失败');
+            }
+        },{enableHighAccuracy: true})//指示浏览器获取高精度的位置，默认false
+
+    });
+</script>
