@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>上传阶段性任务</title>
+		<title>重新提交</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -53,30 +53,42 @@
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<h3>确认信息并提交文档</h3>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/uploadStageFile}" class="form-horizontal" method="post" enctype="multipart/form-data">
+					<form th:action="@{/reUploadStageFile}" class="form-horizontal" method="post" enctype="multipart/form-data">
 						<div class="row form-group">
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
 							<div class="col-lg-5 col-md-6">
 							<input th:value="${topic.topicname}" name="topicname" id="topicname" type="text" class="form-control"  th:readonly="true" >
-							<input type="hidden" th:value="${topic.id}" name="topicid" id="topicid">
 							</div>
 						</div>
 						<div class="row form-group">
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stagetopicname"><strong>阶段性任务名:</strong></label>
 							<div class="col-lg-5 col-md-6">
 							<input th:value="${stagetopic.stagename}"  name="stagetopicname"  id="stagetopicname"  class="form-control" th:readonly="true"></input>
-							<input type="hidden" th:value="${stagetopic.id}" name="stagetopicid" id="stagetopicid">
+							<input type="hidden" th:value="${stagetopicresult.id}" name="stagetopicresultid" id="stagetopicresultid">
 								<input type="hidden" th:value="${stuId}" name="stuId" id="stuId">
 							</div>
 						</div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="file"><strong>提交文档:</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="suggestion"><strong>建议:</strong></label>
 							<div class="col-lg-5 col-md-6">
-							<input type="file" id="file"  name="file" ><br>
+								<textarea name="suggestion"  id="suggestion" rows="6" class="form-control" th:text="${stagetopicresult.suggestion}" ></textarea>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stagetopicname"><strong>已提交的文件:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input th:value="${stagetopicresult.downloadlink}"  name="downloadlink"  id="downloadlink"  class="form-control" th:readonly="true"></input>
 							</div>
 						</div>
 
-						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="file"><strong>重新提交:</strong></label>
+							<div class="col-lg-5 col-md-6">
+							<input type="file" id="file"  name="file">
+							</div>
+						</div>
+
+						<p style="color: red" th:text="${isSuccess}" th:if="${not #strings.isEmpty(isSuccess)}"></p>
 						<button type="submit" id="release" name="release" class="btn btn-primary" >提交</button>
 						&nbsp
 						<a href="#" onClick="javascript:history.back(-1);">返回</a>

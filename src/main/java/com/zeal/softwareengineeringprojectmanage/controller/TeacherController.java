@@ -1,5 +1,6 @@
 package com.zeal.softwareengineeringprojectmanage.controller;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import com.zeal.softwareengineeringprojectmanage.bean.*;
 import com.zeal.softwareengineeringprojectmanage.service.*;
 import org.apache.commons.io.FileUtils;
@@ -38,6 +39,8 @@ public class TeacherController {
     StudentService studentService;
     @Autowired
     StagetopicService stagetopicService;
+    @Autowired
+    StagetopicresultService stagetopicresultService;
     @Autowired
     ClazzService clazzService;
     @Value("${file.uploadTopicFolder}")
@@ -96,9 +99,14 @@ public class TeacherController {
             String path = uploadTopicFilePath + file.getOriginalFilename();
             topic.setDownloadlink(path);
             topic.setReleasetime(date);
-            File tempFile = null;
+            File tempFile = tempFile =  new File(path);
+            if(tempFile.exists()){
+                model.addAttribute("IsSuccess","文件已存在，请重新选择");
+                Teacher teacher = teacherService.selectByPrimayKey(topic.getTeaid());
+                model.addAttribute("teacher",teacher);
+                return "teacher/addTopic";
+            }
             try {
-                tempFile =  new File(path);
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
             }catch (Exception e){
                 e.printStackTrace();
@@ -187,18 +195,22 @@ public class TeacherController {
         }
         String path = uploadTopicFilePath + file.getOriginalFilename();
         topic.setDownloadlink(path);
-        File tempFile = null;
-        try {
-            tempFile =  new File(path);
-            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
-        }catch (Exception e){
-            e.printStackTrace();
-            String IsSuccess="文件上传失败";
+        File tempFile =  tempFile =  new File(path);
+        if(tempFile.exists()){
+            String IsSuccess="文件已存在，请重新选择！";
             return "redirect:/getTopicDetail/"+id+"?IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
+        }else {
+            try {
+                FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+                String IsSuccess = "文件上传失败";
+                return "redirect:/getTopicDetail/" + id + "?IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
+            }
+            int i = topicService.updateByPrimaryKey(topic);
+            String isUpdateSuccess = "成功更新" + i + "条选题";
+            return "redirect:/manageTopic?currentUser=" + teaid + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
         }
-        int i = topicService.updateByPrimaryKey(topic);
-        String isUpdateSuccess="成功更新"+i+"条选题";
-        return "redirect:/manageTopic?currentUser="+teaid+"&page=1&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
     }
 
     @RequestMapping("/updateTopic/delete/")
@@ -467,9 +479,14 @@ public class TeacherController {
             }
             String path = uploadStageTopicFilePath + file.getOriginalFilename();
             stagetopic.setDownloadlink(path);
-            File tempFile = null;
+            File tempFile = tempFile =  new File(path);
+            if(tempFile.exists()){
+                model.addAttribute("IsSuccess","文件已存在，请重新选择文件");
+                Teacher teacher = teacherService.selectByPrimayKey(teaid);
+                model.addAttribute("teacher",teacher);
+                return "teacher/addStageTopic";
+            }else {
             try {
-                tempFile =  new File(path);
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
             }catch (Exception e){
                 e.printStackTrace();
@@ -487,6 +504,7 @@ public class TeacherController {
                 Teacher teacher = teacherService.selectByPrimayKey(teaid);
                 model.addAttribute("teacher",teacher);
                 return "teacher/addStageTopic";
+            }
             }
         }else {
             model.addAttribute("IsSuccess", "文件为空，上传失败");
@@ -589,6 +607,60 @@ public class TeacherController {
             object.put("code",-1);
             object.put("msg","修改失败，请重新尝试！！");
             return object.toString();
+        }
+    }
+
+    @RequestMapping("/auditStageTopic")
+    public String auditStageTopic(Integer currentUser,Integer page,Model model){
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(5);
+
+        List<Stagetopic> stagetopics = stagetopicService.selectByTeaId(currentUser);
+        List<Integer> stagetopicIds=new ArrayList<>();
+        for (Stagetopic stagetopic:stagetopics){
+            stagetopicIds.add(stagetopic.getId());
+        }
+        List<Stagetopicresult> stagetopicresultsAll = stagetopicresultService.selectByStageTopicIds(stagetopicIds);
+        p.setTotalUsers(stagetopicresultsAll.size());
+        List<Stagetopicresult> stagetopicresults = stagetopicresultService.selectByStageTopicIdsAndPage(stagetopicIds, (page - 1) * p.getPageSize(), p.getPageSize());
+        model.addAttribute("stagetopicresults",stagetopicresults);
+        List<Topic> topics = topicService.selectByTeacherId(currentUser);
+        model.addAttribute("topics",topics);
+        model.addAttribute("stagetopics",stagetopics);
+        model.addAttribute("page",p);
+        model.addAttribute("currentUser",currentUser);
+        return "teacher/auditStageTopic";
+    }
+
+    @RequestMapping("/auditStage")
+    public String auditStage(Integer stagetopicresultId,Model model){
+        Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
+        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
+        Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
+        model.addAttribute("stagetopicresult",stagetopicresult);
+        model.addAttribute("stagetopic",stagetopic);
+        model.addAttribute("topic",topic);
+        model.addAttribute("currentUser",topic.getTeaid());
+        return "teacher/auditStageDetail";
+    }
+
+    @RequestMapping("/auditStageDetail")
+    @ResponseBody
+    public String auditStageDetail(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int ispass = Integer.parseInt(request.getParameter("ispass"));
+        String suggestion = request.getParameter("suggestion");
+        int i = stagetopicresultService.updateByIdAndIsPassAndSugg(id, ispass, suggestion);
+       JSONObject jsonObject= new JSONObject();
+        if(i>0){
+            jsonObject.put("code",1);
+            jsonObject.put("msg","成功审核id为"+id+"的任务");
+            return jsonObject.toString();
+        }else {
+            jsonObject.put("code",-1);
+            jsonObject.put("msg","修改失败，请重新尝试！！");
+            return jsonObject.toString();
         }
     }
 }

@@ -100,9 +100,28 @@ public class StudentController {
         p.setPageSize(5);
         Student student = studentService.selectByPrimaryKey(stuId);
         Teacher teacher = teacherService.selectByPrimayKey(student.getTeaid());
-        p.setTotalUsers(stagetopicService.selectByTeaId(student.getTeaid()).size());
+        List<Stagetopic> stagetopics1 = stagetopicService.selectByTeaId(student.getTeaid());
+        p.setTotalUsers(stagetopics1.size());
         List<Stagetopic> stagetopics = stagetopicService.selectByTeaIdAndPage(student.getTeaid(), (page - 1) * p.getPageSize(), p.getPageSize());
+        List<Integer> stagetopicsIds =new ArrayList<>();
+        for(Stagetopic stagetopic:stagetopics1){
+            stagetopicsIds.add(stagetopic.getId());
+        }
         List<Stagetopicresult> stagetopicresults = stagetopicresultService.selectByTopicId(student.getTopicid());
+        List<Integer> resultstagetopicsIds=new ArrayList<>();
+        for (Stagetopicresult stagetopicresult:stagetopicresults){
+            resultstagetopicsIds.add(stagetopicresult.getStagetopicid());
+        }
+        for (Integer id:stagetopicsIds){
+            if(!resultstagetopicsIds.contains(id)){
+                Stagetopicresult stagetopicresult = new Stagetopicresult();
+                stagetopicresult.setStagetopicid(id);
+                stagetopicresult.setTopicid(student.getTopicid());
+                stagetopicresult.setIspass(null);
+                stagetopicresult.setDownloadlink("");
+                stagetopicresults.add(stagetopicresult);
+            }
+        }
         model.addAttribute("page",p);
         model.addAttribute("stagetopics",stagetopics);
         model.addAttribute("teacher",teacher);
@@ -144,6 +163,7 @@ public class StudentController {
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
                 model.addAttribute("topic",topic);
+                model.addAttribute("stuId",stuId);
                 return  "student/uploadStageTopic";
             }
             else {
@@ -156,11 +176,13 @@ public class StudentController {
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
                 model.addAttribute("topic",topic);
+                model.addAttribute("stuId",stuId);
                 return  "student/uploadStageTopic";
             }
             int insert = stagetopicresultService.insert(stagetopicresult);
             if(insert>0){
                 String isUpdateSuccess="成功提交";
+                System.out.println(stuId);
                 return "redirect:/stageTopic?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }else {
                 model.addAttribute("IsSuccess","提交失败，请重新尝试!");
@@ -168,6 +190,7 @@ public class StudentController {
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
                 model.addAttribute("topic",topic);
+                model.addAttribute("stuId",stuId);
                 return  "student/uploadStageTopic";
             }
             }
@@ -177,7 +200,134 @@ public class StudentController {
             Topic topic = topicService.selectByPrimaryKey(topicid);
             model.addAttribute("stagetopic",stagetopic);
             model.addAttribute("topic",topic);
+            model.addAttribute("stuId",stuId);
             return  "student/uploadStageTopic";
         }
     }
-}
+
+    @RequestMapping("/changeStageResultFile")
+    public String changeStageResultFile(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+        Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
+        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
+        Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
+        model.addAttribute("stagetopicresult",stagetopicresult);
+        model.addAttribute("stagetopic",stagetopic);
+        model.addAttribute("topic",topic);
+        model.addAttribute("isSuccess",isSuccess);
+        model.addAttribute("stuId",stuId);
+        return "student/changeStageResult";
+    }
+
+    @RequestMapping("/changeStageFile")
+    public String changeStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+        if(file.isEmpty()){
+            String isSuccess="文件为空，请重新选择！";
+            return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
+        }else {
+            Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
+            File f=new File(stagetopicresult.getDownloadlink());
+            if(f.exists()){
+                f.delete();
+            }
+            File dir = new File(stageTopicResultPath);
+            if(!dir.exists()) {
+                dir.mkdir();
+            }
+            String path = stageTopicResultPath + file.getOriginalFilename();
+            Date date=new Date();
+            stagetopicresult.setSubmittime(date);
+            stagetopicresult.setDownloadlink(path);
+            File tempFile =  tempFile =  new File(path);
+            if(tempFile.exists()){
+                String isSuccess="文件已存在，请重新选择！";
+                return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
+            }else {
+                try {
+                    FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    String isSuccess = "文件上传失败";
+                    return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
+                }
+                int i = stagetopicresultService.updateByPrimaryKey(stagetopicresult);
+                if(i>0) {
+                    String isUpdateSuccess="成功重新提交";
+                    return "redirect:/stageTopic?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
+                }else {
+                    String isSuccess = "重新提交失败，请重新尝试！";
+                    return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
+                }
+            }
+        }
+    }
+
+    @RequestMapping("/reUploadStage")
+    public String reUploadStage(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+        Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
+        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
+        Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
+        model.addAttribute("stagetopicresult",stagetopicresult);
+        model.addAttribute("stagetopic",stagetopic);
+        model.addAttribute("topic",topic);
+        model.addAttribute("isSuccess",isSuccess);
+        model.addAttribute("stuId",stuId);
+        return "student/reUploadStage";
+    }
+
+    @RequestMapping("/reUploadStageFile")
+    public String reUploadStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+        if (file.isEmpty()) {
+            String isSuccess = "文件为空，请重新选择！";
+            return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
+        } else {
+            Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
+            File f = new File(stagetopicresult.getDownloadlink());
+            if (f.exists()) {
+                f.delete();
+            }
+            File dir = new File(stageTopicResultPath);
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            String path = stageTopicResultPath + file.getOriginalFilename();
+            Date date = new Date();
+            stagetopicresult.setSubmittime(date);
+            stagetopicresult.setDownloadlink(path);
+            Integer integer = new Integer(2);
+            stagetopicresult.setIspass(integer.byteValue());
+            File tempFile = tempFile = new File(path);
+            if (tempFile.exists()) {
+                String isSuccess = "文件已存在，请重新选择！";
+                return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
+            } else {
+                try {
+                    FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    String isSuccess = "文件上传失败";
+                    return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
+                }
+                int i = stagetopicresultService.updateByPrimaryKey(stagetopicresult);
+                if (i > 0) {
+                    String isUpdateSuccess = "成功重新提交";
+                    return "redirect:/stageTopic?stuId=" + stuId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
+                } else {
+                    String isSuccess = "重新提交失败，请重新尝试！";
+                    return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
+                }
+            }
+        }
+    }
+
+        @RequestMapping("/getStageCheckDetail")
+        public String getStageCheckDetail(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+            Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
+            Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
+            Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
+            model.addAttribute("stagetopicresult",stagetopicresult);
+            model.addAttribute("stagetopic",stagetopic);
+            model.addAttribute("topic",topic);
+            return "student/getStageCheckDetail";
+        }
+    }
+

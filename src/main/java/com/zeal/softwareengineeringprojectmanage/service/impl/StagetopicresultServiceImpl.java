@@ -26,4 +26,39 @@ public class StagetopicresultServiceImpl implements StagetopicresultService {
         int insert = stagetopicresultMapper.insert(stagetopicresult);
         return insert;
     }
+
+    @Override
+    public Stagetopicresult selectByPrimaryKey(Integer id) {
+        Stagetopicresult stagetopicresult = stagetopicresultMapper.selectByPrimaryKey(id);
+        return stagetopicresult;
+    }
+
+    @Override
+    public int updateByPrimaryKey(Stagetopicresult stagetopicresult) {
+        int i = stagetopicresultMapper.updateByPrimaryKey(stagetopicresult);
+        return i;
+    }
+
+    @Override
+    public List<Stagetopicresult> selectByStageTopicIds(List<Integer> stageTopicIds) {
+        StagetopicresultExample stagetopicresultExample=new StagetopicresultExample();
+        StagetopicresultExample.Criteria criteria = stagetopicresultExample.createCriteria();
+        criteria.andStagetopicidIn(stageTopicIds);
+        List<Stagetopicresult> stagetopicresults = stagetopicresultMapper.selectByExample(stagetopicresultExample);
+        return stagetopicresults;
+    }
+
+    @Override
+    public List<Stagetopicresult> selectByStageTopicIdsAndPage(List<Integer> stageTopicIds, Integer start, Integer pageSize) {
+        List<Stagetopicresult> stagetopicresults = stagetopicresultMapper.selectByStageTopicIdsAndPage(stageTopicIds, start, pageSize);
+        return stagetopicresults;
+    }
+
+    @Override
+    public int updateByIdAndIsPassAndSugg(Integer id, Integer ispass, String suggestion) {
+
+        int i = stagetopicresultMapper.updateByIdAndIsPassAndSugg(id, ispass.byteValue(), suggestion);
+        return i;
+
+    }
 }

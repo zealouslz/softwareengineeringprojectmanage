@@ -4,6 +4,8 @@ import com.zeal.softwareengineeringprojectmanage.bean.Stagetopicresult;
 import com.zeal.softwareengineeringprojectmanage.bean.StagetopicresultExample;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 public interface StagetopicresultMapper {
     /**
@@ -93,4 +95,10 @@ public interface StagetopicresultMapper {
      * @mbggenerated
      */
     int updateByPrimaryKey(Stagetopicresult record);
+
+   @Select({"<script>","select * from stagetopicresult where stagetopicId in","<foreach collection=\"stageTopicIds\" item=\"stagetopicId\" index=\"index\" open=\"(\" separator=\",\" close=\")\">","#{stagetopicId}","</foreach>","limit #{start},#{pageSize}","</script>"})
+    List<Stagetopicresult> selectByStageTopicIdsAndPage(@Param("stageTopicIds") List<Integer> stageTopicIds,@Param("start") Integer start,@Param("pageSize") Integer pageSize);
+
+    @Update("update stagetopicresult set isPass=#{isPass},suggestion=#{suggestion} where id=#{id}")
+    int updateByIdAndIsPassAndSugg(@Param("id") Integer id,@Param("isPass") Byte isPass,@Param("suggestion") String suggestion);
 }
