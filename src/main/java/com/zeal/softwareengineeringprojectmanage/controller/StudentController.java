@@ -31,7 +31,8 @@ public class StudentController {
     StagetopicService stagetopicService;
     @Autowired
     StagetopicresultService stagetopicresultService;
-
+    @Autowired
+    BlocktaskService blocktaskService;
     @Value("${file.uploadStageTopicResultFolder}")
     private String stageTopicResultPath;
 
@@ -329,5 +330,27 @@ public class StudentController {
             model.addAttribute("topic",topic);
             return "student/getStageCheckDetail";
         }
-    }
+
+        @RequestMapping("/blockStageTopicHtml")
+        public String blockStageTopicHtml(Integer stuId,Integer page,String isUpdateSuccess,Model model){
+            Page p=new Page();
+            p.setCurrentPage(page);
+            p.setPageSize(5);
+            p.setTotalUsers(blocktaskService.selectByGroupLeaderId(stuId).size());
+            List<Blocktask> blocktasks = blocktaskService.selectByGroupLeaderIdAndPage(stuId, (page - 1) * p.getPageSize(), p.getPageSize());
+            Student groupLeader = studentService.selectByPrimaryKey(stuId);
+            Topic topic = topicService.selectByPrimaryKey(groupLeader.getTopicid());
+            List<Stagetopic> stagetopics = stagetopicService.selectByTeaId(groupLeader.getTeaid());
+            List<Student> students = studentService.selectByGroupId(groupLeader.getGroupid());
+            model.addAttribute("blocktasks",blocktasks);
+            model.addAttribute("page",p);
+            model.addAttribute("groupLeader",groupLeader);
+            model.addAttribute("topic",topic);
+            model.addAttribute("stagetopics",stagetopics);
+            model.addAttribute("students",students);
+            model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+            return "student/blockStageTopic";
+        }
+
+}
 
