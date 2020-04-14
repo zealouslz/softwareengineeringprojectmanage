@@ -30,4 +30,5 @@ public interface StudentService {
     List<Student> selectByTeaIdAndGroupId(Integer teaId,Integer groupId);
     List<Student> selectByStuIdAndTeaId(Integer stuId,Integer teaId);
     int updateGroupAndTopicByStuId(Integer stuId,Integer isgroupLeader,Integer groupId,Integer topicId);
+    Student selectGroupLeader(Integer groupId);
 }

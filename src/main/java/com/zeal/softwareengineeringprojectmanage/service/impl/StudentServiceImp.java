@@ -152,4 +152,15 @@ public class StudentServiceImp implements StudentService {
         int i = studentMapper.updateGroupAndTopicByStuId(stuId, isgroupLeader, groupId, topicId);
         return i;
     }
+
+    @Override
+    public Student selectGroupLeader(Integer groupId) {
+        StudentExample studentExample=new StudentExample();
+        StudentExample.Criteria criteria = studentExample.createCriteria();
+        criteria.andGroupidEqualTo(groupId);
+        Integer integer=new Integer(1);
+        criteria.andIsgroupleaderEqualTo(integer.byteValue());
+        List<Student> students = studentMapper.selectByExample(studentExample);
+        return students.get(0);
+    }
 }

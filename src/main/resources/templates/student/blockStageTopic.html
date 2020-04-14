@@ -52,7 +52,7 @@
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<p style="color: red" th:text="${isUpdateSuccess}" th:if="${not #strings.isEmpty(isUpdateSuccess)}"></p>
 					<div>
-						<h2><a class="btn btn-sm btn-success"   th:href="@{/addTopic}">新建分块</a></h2>
+						<h2><a class="btn btn-sm btn-success"   th:href="@{/addBlockTopicHtml}+'?stuId='+${groupLeader.id}">分配任务</a></h2>
 					</div>
 					<div class="table-responsive">
 						<table class="table table-striped table-sm">
@@ -84,14 +84,14 @@
 								<td th:text="${groupLeader.stuname}"></td>
 								<td th:text="${student.stuname}" th:each="student:${students}" th:if="${student.id}==${blocktask.stuid}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getTopicDetail/}+${topic.id}+${'?IsSuccess='}">编辑</a>
-									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${topic.id}]]')">删除</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getBlockTaskDetail}+'?Id='+${blocktask.id}">编辑</a>
+									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${blocktask.id}]]')">删除</a>
 								</td>
 							</tr>
 							</tbody>
 						</table>
 						<table  th:if="${page!=null}">
-							<tr >
+							<tr>
 								<form  th:action="@{/blockStageTopicHtml}">
 									<td><input type="hidden" name="page" th:value="1"></td>
 									<td><input type="hidden" name="stuId" th:value="${groupLeader.id}"></td>
@@ -142,10 +142,10 @@
 		<script>
 			feather.replace()
 			function dele(id) {
-				var teaId = $("#currentUser").val();
-				if (confirm('确定删除id为' + id + '的选题吗？')) {
+				var currentUser = $("#currentUser").val();
+				if (confirm('确定删除id为' + id + '的任务吗？')) {
 					$.ajax({
-						url: '/updateTopic/delete/',
+						url: '/deleteBlockTask',
 						type: "POST",
 						data: {
 							'id': id
@@ -159,7 +159,7 @@
 							//将json对象转换为字符串
 							if (code == 1) {
 								alert(msg);
-								window.location.href = "/manageTopic?currentUser="+teaId+"&page=1";
+								window.location.href = "/blockStageTopicHtml?stuId=" + currentUser + "&page=1";
 							} else {
 								alert(msg);
 							}

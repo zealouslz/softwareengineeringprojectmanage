@@ -226,7 +226,7 @@ public class TeacherController {
             return object.toString();
         }else {
             object.put("code",-1);
-            object.put("msg","修改失败，请重新尝试！！");
+            object.put("msg","删除失败，请重新尝试！！");
             return object.toString();
         }
     }
@@ -662,5 +662,21 @@ public class TeacherController {
             jsonObject.put("msg","修改失败，请重新尝试！！");
             return jsonObject.toString();
         }
+    }
+
+    @RequestMapping("/auditTopicHtml")
+    public String auditTopicHtml(Integer currentUser,Integer page,String isUpdateSuccess,Model model){
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(5);
+        p.setTotalUsers(topicService.selectByTeacherId(currentUser).size());
+        List<Topic> topics = topicService.selectByTeaIdAddPage(currentUser,(page - 1) * p.getPageSize(), p.getPageSize());
+        model.addAttribute("topics",topics);
+        model.addAttribute("page",p);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        List<Teacher> teachers = teacherService.selectAll();
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("currentUser",currentUser);
+        return "teacher/manageTopic";
     }
 }

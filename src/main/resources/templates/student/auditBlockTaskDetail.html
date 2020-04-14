@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>审核</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<style type="text/css">
+			/* Chart.js */
+			
+			@-webkit-keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			@keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			.chartjs-render-monitor {
+				-webkit-animation: chartjs-render-animation 0.001s;
+				animation: chartjs-render-animation 0.001s;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#studentsidebar"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicName"><strong>所属选题:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="topicName"  id="topicName" th:value="${topic.topicname}" class="form-control" th:readonly="true">
+								<input name="topicId"  id="topicId" th:value="${topic.id}" class="form-control" type="hidden">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stageTopic"><strong>所属阶段性任务:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="stageTopic"  id="stageTopic"  class="form-control" th:value="${stagetopic.stagename}" th:readonly="true">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="blockTopicName"><strong>任务分块名:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="blockTopicName"  id="blockTopicName"  class="form-control" th:value="${blocktask.blockname}" th:readonly="true">
+								<input name="blockId"  id="blockId"  class="form-control" th:value="${blocktask.id}" type="hidden" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuName"><strong>提交人:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="stuName"  id="stuName"  class="form-control" th:value="${student.stuname}" th:readonly="true">
+								<input name="groupLeaderId" id="groupLeaderId" type="hidden" th:value="${blocktask.groupleaderid}">
+							</div>
+						</div>
+
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="downloadlink"><strong>文档下载：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<a th:href="@{${blocktask.uploadfile}}" th:text="${blocktask.uploadfile}" download="" id="downloadlink"></a>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="ispass"><strong>是否通过：</strong></label>
+							<div class="col-lg-5 col-md-6" id="ispass">
+								<div class="radio-inline">
+									<label><input name="ispass"  th:checked="${blocktask.ispass==1}" type="radio" value="1"/>是</label>
+									 <label><input name="ispass" th:checked="${blocktask.ispass==0}" type="radio" value="0" />否</label>
+								</div>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuName"><strong>评分:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="score"  id="score"  type="number" class="form-control" th:value="${blocktask.score}" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="suggestion"><strong>建议:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<textarea name="suggestion"  id="suggestion" rows="6" class="form-control" th:text="${blocktask.suggestion}" ></textarea>
+							</div>
+						</div>
+
+						<button type="submit" class="btn btn-primary" th:onclick="check()">提交</button>
+						<button  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</button>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+		<script>
+			feather.replace()
+			function check() {
+				var blockId = $("#blockId").val();
+				var ispass=$('input[name="ispass"]:checked').val();
+				var score = $("#score").val();
+				var suggestion = $("#suggestion").val();
+				var groupLeaderId=$("#groupLeaderId").val()
+				if (confirm('确定提交？')) {
+					$.ajax({
+						url: '/checkBlockTask',
+						type: "POST",
+						data: {
+							'blockId': blockId,
+							'ispass':ispass,
+							'score':score,
+							'suggestion':suggestion
+						},
+						dataType: "text",
+						async: false,
+						success: function (datas) {
+							var result = JSON.parse(datas);
+							var code = result.code;
+							var msg = result.msg;
+							//将json对象转换为字符串
+							if (code == 1) {
+								alert(msg);
+								window.location.href = "/auditBlockTaskHtml?stuId=" + groupLeaderId + "&page=1";
+							} else {
+								alert(msg);
+							}
+
+						},
+						error: function () {
+							alert("提交请求失败！");
+						}
+					});
+				}
+				return false;
+			}
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>更新任务信息</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<style type="text/css">
+			/* Chart.js */
+			
+			@-webkit-keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			@keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			.chartjs-render-monitor {
+				-webkit-animation: chartjs-render-animation 0.001s;
+				animation: chartjs-render-animation 0.001s;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#studentsidebar"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<p style="color: red" th:text="${isSuccess}" th:if="${not #strings.isEmpty(isSuccess)}"></p>
+					<!--需要区分是员工修改还是添加；-->
+					<form th:action="@{/updateBlockTask}" class="form-horizontal" method="post" enctype="multipart/form-data">
+
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="groupId"><strong>组号：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="groupId" id="groupId" type="text" class="form-control" th:value="${groupLeader.groupid}" th:readonly="true">
+								<input name="groupLeaderId" id="groupLeaderId" type="hidden" class="form-control" th:value="${groupLeader.id}" >
+								<input name="blockTaskId" id="blockTaskId" type="hidden" class="form-control" th:value="${blocktask.id}" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicName"><strong>选题:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="topicName"  id="topicName" th:value="${topic.topicname}" class="form-control" th:readonly="true">
+								<input name="topicId"  id="topicId" th:value="${topic.id}" class="form-control" type="hidden">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stageTopic"><strong>阶段性任务:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<select class="form-control" name="stageTopic" id="stageTopic">
+									<option th:selected="${stagetopic.id}==${blocktask.stagetopicid}" th:value="${stagetopic.id}" th:each="stagetopic:${stagetopics}" th:text="${stagetopic.stagename}"></option>
+								</select>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="blockTopicName"><strong>任务分块名:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input name="blockTopicName"  id="blockTopicName"  class="form-control" th:value="${blocktask.blockname}">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="blocktopicdescribe"><strong>任务描述:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<textarea name="blocktopicdescribe"  id="blocktopicdescribe" rows="6" class="form-control" th:text="${blocktask.blockdescribe}" ></textarea>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuId"><strong>指派给:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<select class="form-control" name="stuId" id="stuId">
+									<option  th:selected="${student.id}==${blocktask.stuid}" th:value="${student.id}" th:each="student:${students}" th:text="${student.stuname}"></option>
+								</select>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="releaseTime"><strong>发布时间：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input id="releaseTime" name="releaseTime" class="form-control" type="datetime-local"  th:value="${#dates.format(blocktask.releasetime,'yyyy-MM-dd')+'T'}+${#dates.format(blocktask.releasetime,'HH:mm')}" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="deadline"><strong>截止时间：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input id="deadline" name="deadline" class="form-control" type="datetime-local"  th:value="${#dates.format(blocktask.deadline,'yyyy-MM-dd')+'T'}+${#dates.format(blocktask.deadline,'HH:mm')}" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="downloadlink"><strong>参考文档：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input id="downloadlink" name="downloadlink" type="text" class="form-control"  th:value="${blocktask.downloadlink}" th:readonly="true">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="file"><strong>重新上传：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input type="file" name="file" id="file"><br>
+							</div>
+						</div>
+						<button type="submit" class="btn btn-primary">修改</button>
+						<button  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</button>
+					</form>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+		<script>
+			feather.replace()
+		</script>
+	</body>
+
+</html>
