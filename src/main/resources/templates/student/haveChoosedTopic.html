@@ -50,7 +50,6 @@
 				<!--引入sidebar-->
 				<div th:replace="commons/bar::#studentsidebar(activeUri='yourtopic')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<p style="color: red" th:text="${isChooseSuccess}" th:if="${not #strings.isEmpty(isChooseSuccess)}"></p>
 					<div class="table-responsive">
 						<table class="table table-striped table-sm">
 							<tr>
@@ -85,17 +84,82 @@
 								<td>选题截止时间</td>
 								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm')}"></td>
 							</tr>
-                            <tr th:if="${student.isgroupleader}==1">
+
+							<tr th:if=" ${topic.result.length()>0}">
+								<td>已提交的文件</td>
+								<td><a th:href="@{${topic.result}}" th:text="${topic.result}" download="" ></a></td>
+							</tr>
+
+							<tr>
+								<td>状态</td>
+								<td>
+									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==null}">已提交，等待审核</a>
+									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()==0}">未提交</a>
+									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==0}">未通过,等待重新提交</a>
+									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==1}">已通过</a>
+									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==2}">重新提交，等待审核</a>
+									<a  th:if="${topic.deadline}<${new java.util.Date()}">该选题已结束</a>
+								</td>
+							</tr>
+							<tr th:if="${student.isgroupleader}==1 and ${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==0}">
+								<td>修改意见</td>
+								<td th:text="${topic.suggestion}"></td>
+							</tr>
+
+                            <tr th:if="${student.isgroupleader}==1 and ${topic.deadline}>${new java.util.Date()} and ${topic.result.length()==0}">
                                 <td>提交最终报告</td>
 								<td>
 									<form method="post" enctype="multipart/form-data"  action="/uploadResult">
-										<input type="file" name="filename"/>
-										<input type="submit" value="提交上传"/>
+										<input type="file" name="file"/>
+										<input type="hidden" th:value="${topic.id}" name="topicId" id="topicId">
+										<input type="hidden" th:value="${student.id}" name="stuId" id="stuId">
+										<input type="submit" value="提交"/>
 									</form>
 								</td>
 							</tr>
-						</table>
 
+							<tr th:if="${student.isgroupleader}==1 and ${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==null}">
+							<td>修改</td>
+							<td>
+								<form method="post" enctype="multipart/form-data"  action="/changeResult">
+									<input type="file" name="file">
+									<input type="hidden" th:value="${topic.id}" name="topicId" >
+									<input type="hidden" th:value="${student.id}" name="stuId" >
+									<input type="submit" value="提交"/>
+								</form>
+							</td>
+							<tr th:if="${student.isgroupleader}==1 and ${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==0}">
+								<td>重新提交</td>
+								<td>
+									<form method="post" enctype="multipart/form-data"  action="/reUploadResult">
+										<input type="file" name="file"/>
+										<input type="hidden" th:value="${topic.id}" name="topicId" >
+										<input type="hidden" th:value="${student.id}" name="stuId" >
+										<input type="submit" value="提交上传"/>
+									</form>
+								</td>
+						    </tr>
+							<tr th:if="${student.isgroupleader}==1 and ${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==2}">
+								<td>修改</td>
+								<td>
+									<form method="post" enctype="multipart/form-data"  action="/changeResult">
+										<input type="file" name="file">
+										<input type="hidden" th:value="${topic.id}" name="topicId" >
+										<input type="hidden" th:value="${student.id}" name="stuId" >
+										<input type="submit" value="提交"/>
+									</form>
+								</td>
+							</tr>
+							<tr th:if=" ${topic.result.length()>0} and ${topic.ispass==1}">
+								<td>评分</td>
+								<td th:text="${topic.score}"></td>
+							</tr>
+							<tr th:if=" ${topic.result.length()>0} and ${topic.ispass==1}">
+								<td>评语</td>
+								<td th:text="${topic.suggestion}"></td>
+							</tr>
+						</table>
+						<p style="color: red" th:text="${isChooseSuccess}" th:if="${not #strings.isEmpty(isChooseSuccess)}"></p>
 						<form th:action="@{/choosetopic}" class="form-horizontal" method="post">
 							<input type="hidden" name="stuId" th:value="${student.getId()}">
 							<input type="hidden" name="page" th:value="1">

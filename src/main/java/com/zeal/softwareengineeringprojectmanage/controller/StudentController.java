@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.jws.WebParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -47,6 +48,8 @@ public class StudentController {
     private String blockTaskPath;
     @Value("${file.uploadBlockTaskResultFolder}")
     private String blockTaskResultPath;
+    @Value("${file.uploadTopicResultFolder}")
+    private String topicResultPath;
     @RequestMapping("/choosetopic")
     public String chooseTopic(Integer stuId, Integer page,Model model){
         Page p=new Page();
@@ -89,6 +92,9 @@ public class StudentController {
             return "redirect:/choosetopic?stuId="+stu.getId()+"&page=1";
         }
         Topic topic = topicService.selectByPrimaryKey(stu.getTopicid());
+        if(topic.getResult()==null){
+            topic.setResult("");
+        }
         Teacher teacher = teacherService.selectByPrimayKey(stu.getTeaid());
         model.addAttribute("topic",topic);
         model.addAttribute("teacher",teacher);
@@ -796,7 +802,133 @@ public class StudentController {
             }
         }
 
+        @RequestMapping("/uploadResultHtml")
+        public String uploadResultHtml(Integer stuId,Model model){
+            Student student = studentService.selectByPrimaryKey(stuId);
+            Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
+            Teacher teacher = teacherService.selectByPrimayKey(topic.getTeaid());
+            model.addAttribute("student",student);
+            model.addAttribute("topic",topic);
+            model.addAttribute("teacher",teacher);
+            return "student/uploadResult";
+        }
 
+        @RequestMapping("/uploadResult")
+        public String uploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            if (file.isEmpty()){
+               String isChooseSuccess="文件不能为空，请重新选择！";
+               return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+            }else {
+                File dir = new File(topicResultPath);
+                if(!dir.exists()) {
+                    dir.mkdir();
+                }
+                String path = topicResultPath + file.getOriginalFilename();
+                File tempFile = tempFile =  new File(path);
+                if(tempFile.exists()){
+                    String isChooseSuccess="文件已存在，请重新上传!";
+                    return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
+                }
+                else {
+                    try {
+                        FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        String isChooseSuccess="文件上传异常!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                    int i = topicService.uploadResult(topicId,path,new Date());
+                    if(i>0){
+                        String isChooseSuccess="成功提交";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }else {
+                        String isChooseSuccess="提交失败，请重新尝试!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                }
+            }
+        }
 
+        @RequestMapping("/reUploadResult")
+        public String reUploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            if (file.isEmpty()){
+                String isChooseSuccess="文件不能为空，请重新选择！";
+                return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+            }else {
+                Topic topic = topicService.selectByPrimaryKey(topicId);
+                File f = new File(topic.getResult());
+                if (f.exists()) {
+                    f.delete();
+                }
+                File dir = new File(topicResultPath);
+                if(!dir.exists()) {
+                    dir.mkdir();
+                }
+                String path = topicResultPath + file.getOriginalFilename();
+                File tempFile = tempFile =  new File(path);
+                if(tempFile.exists()){
+                    String isChooseSuccess="文件已存在，请重新上传!";
+                    return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
+                }
+                else {
+                    try {
+                        FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        String isChooseSuccess="文件上传异常!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                    int i = topicService.uploadResultAndIspass(topicId,path,new Date(),2);
+                    if(i>0){
+                        String isChooseSuccess="成功重新提交";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }else {
+                        String isChooseSuccess="提交失败，请重新尝试!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                }
+            }
+        }
+
+        @RequestMapping("/changeResult")
+        public String changeResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            if (file.isEmpty()){
+                String isChooseSuccess="文件不能为空，请重新选择！";
+                return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+            }else {
+                Topic topic = topicService.selectByPrimaryKey(topicId);
+                File f = new File(topic.getResult());
+                if (f.exists()) {
+                    f.delete();
+                }
+                File dir = new File(topicResultPath);
+                if(!dir.exists()) {
+                    dir.mkdir();
+                }
+                String path = topicResultPath + file.getOriginalFilename();
+                File tempFile = tempFile =  new File(path);
+                if(tempFile.exists()){
+                    String isChooseSuccess="文件已存在，请重新上传!";
+                    return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
+                }
+                else {
+                    try {
+                        FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        String isChooseSuccess="文件上传异常!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                    int i = topicService.uploadResult(topicId,path,new Date());
+                    if(i>0){
+                        String isChooseSuccess="成功修改！";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }else {
+                        String isChooseSuccess="提交失败，请重新尝试!";
+                        return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                    }
+                }
+            }
+        }
 }
 

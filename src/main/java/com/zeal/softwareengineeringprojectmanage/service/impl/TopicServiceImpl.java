@@ -80,4 +80,22 @@ public class TopicServiceImpl implements TopicService {
         List<Topic> topics = topicMapper.selectByTeaIdAddDeadlineAndPage(teaId, start, pageSize);
         return topics;
     }
+
+    @Override
+    public int uploadResult(Integer id, String path, Date submittime) {
+        int i = topicMapper.uploadResult(id, path, submittime);
+        return i;
+    }
+
+    @Override
+    public int uploadResultAndIspass(Integer id, String path, Date submittime, Integer ispass) {
+        int i = topicMapper.uploadResultAndIspass(id, path, submittime,ispass);
+        return i;
+    }
+
+    @Override
+    public int auditTopic(Integer id, Integer ispass, String suggestion, Integer score) {
+        int i = topicMapper.auditTopic(id, suggestion, score, ispass);
+        return i;
+    }
 }

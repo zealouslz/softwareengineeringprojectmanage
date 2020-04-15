@@ -677,6 +677,42 @@ public class TeacherController {
         List<Teacher> teachers = teacherService.selectAll();
         model.addAttribute("teachers",teachers);
         model.addAttribute("currentUser",currentUser);
-        return "teacher/manageTopic";
+        return "teacher/auditTopic";
+    }
+
+    @RequestMapping("/auditTopic")
+    public String auditTopic(Integer topicId,Model model){
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        List<Student> students = studentService.selectByTopicId(topicId);
+        StringBuilder groupMemeber=new StringBuilder();
+        for (Student student:students){
+            groupMemeber.append(student.getStuname());
+            groupMemeber.append("、");
+        }
+        model.addAttribute("topic",topic);
+        model.addAttribute("groupMemeber",groupMemeber.toString().substring(0,(groupMemeber.length()-1)));
+        return "teacher/auditTopicDetail";
+    }
+
+    @RequestMapping("/auditTopicDetail")
+    @ResponseBody
+    public String auditTopicDetail(HttpServletResponse response,HttpServletRequest request) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int ispass = Integer.parseInt(request.getParameter("ispass"));
+        String suggestion = request.getParameter("suggestion");
+        int score = Integer.parseInt(request.getParameter("score"));
+        int i = topicService.auditTopic(id, ispass, suggestion, score);
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功审核id为"+id+"的选题";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="审核失败";
+            object.put("msg",msg);
+            return object.toString();
+        }
     }
 }

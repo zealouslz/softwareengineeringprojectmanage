@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>审核</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<style type="text/css">
+			/* Chart.js */
+			
+			@-webkit-keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			@keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			.chartjs-render-monitor {
+				-webkit-animation: chartjs-render-animation 0.001s;
+				animation: chartjs-render-animation 0.001s;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#teachersidebar"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<!--需要区分是员工修改还是添加；-->
+						<div class="row form-group ">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="id"><strong>id:</strong></label>
+                            <div class="col-lg-5 col-md-6">
+							<input id="id" name="id" type="text" class="form-control"  th:value="${topic.id}" th:readonly="true">
+                            </div>
+                        </div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
+                            <div class="col-lg-5 col-md-6">
+							<input id="topicname" name="topicname" type="text" class="form-control"  th:value="${topic.topicname}" th:readonly="true">
+								<input id="currentUser" name="currentUser" type="hidden" class="form-control"  th:value="${topic.teaid}" >
+                            </div>
+                        </div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>组内成员：</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input id="groupMemeber" name="groupMemeber" type="text" class="form-control"  th:value="${groupMemeber}" th:readonly="true">
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="downloadlink"><strong>文档下载：</strong></label>
+                            <div class="col-lg-5 col-md-6">
+								<a th:href="@{${topic.result}}" th:text="${topic.result}" download="" id="downloadlink"></a>
+						    </div>
+                        </div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="ispass"><strong>是否通过：</strong></label>
+							<div class="col-lg-5 col-md-6" id="ispass">
+								<div class="radio-inline">
+									<label><input name="ispass" th:checked="${topic.ispass==1}"  type="radio" value="1"/>是</label>
+									<label><input name="ispass" th:checked="${topic.ispass==0}"  type="radio" value="0" />否</label>
+								</div>
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="score"><strong>小组评分：</strong></label>
+							<div class="col-lg-5 col-md-6" >
+								<input id="score" name="score" type="number" class="form-control"  th:value="${topic.score}" >
+							</div>
+						</div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="suggestion"><strong>建议:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<textarea name="suggestion"  id="suggestion" rows="6" class="form-control" th:text="${topic.suggestion}" ></textarea>
+							</div>
+						</div>
+						<button class="btn btn-primary" th:onclick="check()">提交</button>
+						<a href="#" onClick="javascript:history.back(-1);">返回</a>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+		<script>
+			feather.replace()
+			function check() {
+				var id = $("#id").val();
+                var ispass=$('input[name="ispass"]:checked').val();
+				var suggestion = $("#suggestion").val();
+				var score=$("#score").val();
+				var teaId = $("#currentUser").val();
+				if (confirm('确定提交？')) {
+					$.ajax({
+						url: '/auditTopicDetail',
+						type: "POST",
+						data: {
+							'id': id,
+                            'ispass':ispass,
+							'suggestion':suggestion,
+							'score':score
+						},
+						dataType: "text",
+						async: false,
+						success: function (datas) {
+							var result = JSON.parse(datas);
+							var code = result.code;
+							var msg = result.msg;
+							//将json对象转换为字符串
+							if (code == 1) {
+								alert(msg);
+								window.location.href = "/auditTopicHtml?currentUser=" + teaId + "&page=1";
+							} else {
+								alert(msg);
+							}
+
+						},
+						error: function () {
+							alert("提交请求失败！");
+						}
+					});
+				}
+				return false;
+			}
+
+		</script>
+	</body>
+
+</html>
