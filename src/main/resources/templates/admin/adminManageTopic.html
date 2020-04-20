@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>管理教师信息</title>
+		<title>管理选题信息</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -48,55 +48,91 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#adminsidebar(activeUri='manageTea')"></div>
+				<div th:replace="commons/bar::#adminsidebar(activeUri='adminManageTopic')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<form th:action="@{/adminManageTopic}" class="form-horizontal" method="post">
+						<div class="row form-group">
+							<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="teaId"><strong>按教师查询:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input type="hidden" name="Type" th:value="1">
+								<input type="hidden" name="page" th:value="1">
+								<select class="form-control" name="teaId" >
+									<option th:selected="${teacher.id}==${teaid}" th:value="${teacher.id}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
+								</select>
+
+							</div>
+							<button type="submit" class="btn btn-primary" >查询</button>
+						</div>
+					</form>
 					<p style="color: red" th:text="${isUpdateSuccess}" th:if="${not #strings.isEmpty(isUpdateSuccess)}"></p>
 					<div class="table-responsive">
 						<table class="table table-striped table-sm">
 							<thead>
 							<tr>
 								<th>id</th>
-								<th>工号</th>
-								<th>姓名</th>
-								<th>密码</th>
+								<th>选题名</th>
+								<th>选题描述</th>
+								<th>参考文档</th>
+								<th>指导教师</th>
+								<th>发布时间</th>
+								<th>选题截止时间</th>
+								<th>截止时间</th>
+								<th>人数上限</th>
 								<th>操作</th>
 							</tr>
 							</thead>
 							<tbody>
-							<tr th:each="teacher:${teachers}">
-								<td th:text="${teacher.id}"></td>
-								<td th:text="${teacher.teaid}"></td>
-								<td th:text="${teacher.teaname}"></td>
-								<td th:text="${teacher.password}"></td>
+							<tr th:each="topic:${topics}">
+								<td th:text="${topic.id}"></td>
+								<td th:text="${topic.topicname}"></td>
+								<td th:text="${#strings.abbreviate(topic.topicdescribe,10)}"></td>
+								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
+								<td th:text="${teacher.teaname}" th:each="teacher:${teachers}" th:if="${teacher.id}==${topic.teaid}" th:value="${teacher.id}"></td>
+								<td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm:ss')}"></td>
+								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm:ss')}"></td>
+								<td th:text="${#dates.format(topic.deadline,'yyyy-MM-dd HH:mm:ss')}"></td>
+								<td th:text="${topic.maxsize}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getTeaDetail}+'?teaId='+${teacher.id}">编辑</a>
-									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${teacher.id}]]')">删除</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/adminGetTopicDetail}+'?topicId='+${topic.id}+'&teaId='+${teaid}+'&Type='+${type}+${'&IsSuccess='}">编辑</a>
+									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${topic.id}]]')">删除</a>
 								</td>
 							</tr>
 							</tbody>
 						</table>
 						<table  th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/manageTea}">
+								<form  th:action="@{/adminManageTopic}">
 									<td><input type="hidden" name="page" th:value="1"></td>
-									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
+									<input type="hidden" name="Type"  th:value="${type}">
+									<input type="hidden" name="teaId" id="teaId" th:value="${teaid}"></td>
+									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+										&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+										&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/manageTea}">
+								<form  th:action="@{/adminManageTopic}">
+									<input type="hidden" name="teaId" th:value="${teaid}"></td>
+									<input type="hidden" name="Type"  th:value="${type}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/manageTea}">
+								<form  th:action="@{/adminManageTopic}">
+									<input type="hidden" name="teaId" th:value="${teaid}"></td>
+									<input type="hidden" name="Type"  th:value="${type}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/manageTea}">
+								<form  th:action="@{/adminManageTopic}">
+									<input type="hidden" name="teaId" th:value="${teaid}"></td>
+									<input type="hidden" name="Type"  th:value="${type}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/manageTea}">
+								<form  th:action="@{/adminManageTopic}">
+									<input type="hidden" name="teaId" th:value="${teaid}"></td>
+									<input type="hidden" name="Type" id="Type" th:value="${type}">
 									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
 									<td><input type="submit" value="确定"></td>
 								</form>
@@ -120,9 +156,11 @@
 		<script>
 			feather.replace()
 			function dele(id) {
-				if (confirm('确定删除id为' + id + '的教师信息吗？')) {
+				var teaId = $("#teaId").val();
+				var type=$("#Type").val();
+				if (confirm('确定删除id为' + id + '的选题吗？')) {
 					$.ajax({
-						url: '/deleteTea',
+						url: '/adminDeleteTopic',
 						type: "POST",
 						data: {
 							'id': id
@@ -136,7 +174,7 @@
 							//将json对象转换为字符串
 							if (code == 1) {
 								alert(msg);
-								window.location.href = "/manageTea?page=1";
+								window.location.href = "/adminManageTopic?page=1&teaId="+teaId+"&Type="+type;
 							} else {
 								alert(msg);
 							}

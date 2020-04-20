@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.jws.WebParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sound.midi.Soundbank;
 import javax.swing.event.ListDataEvent;
 import java.io.File;
 import java.io.IOException;
@@ -42,11 +43,15 @@ public class TeacherController {
     @Autowired
     StagetopicresultService stagetopicresultService;
     @Autowired
+    OutstandingcaseService outstandingcaseService;
+    @Autowired
     ClazzService clazzService;
     @Value("${file.uploadTopicFolder}")
     private String uploadTopicFilePath; //选题文件上传的地址
     @Value("${file.uploadStageTopicFolder}")
     private String uploadStageTopicFilePath; //选题文件上传的地址
+    @Value("${file.uploadOutstandingCaseFolder}")
+    private String outstandingCasePath;
     @RequestMapping("/manageTopic")
     public String manageTopic(Integer currentUser,Integer page,String isUpdateSuccess, Model model){
         Page p=new Page();
@@ -714,5 +719,209 @@ public class TeacherController {
             object.put("msg",msg);
             return object.toString();
         }
+    }
+
+    @RequestMapping("/putIntoCaseLibHtml")
+    public String putIntoCaseLibHtml(Integer topicId,Model model){
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        List<Student> students = studentService.selectByTopicId(topicId);
+        StringBuilder groupMemeber=new StringBuilder();
+        for (Student student:students){
+            groupMemeber.append(student.getStuname());
+            groupMemeber.append("、");
+        }
+        model.addAttribute("topic",topic);
+        model.addAttribute("groupMemeber",groupMemeber.toString().substring(0,(groupMemeber.length()-1)));
+        return "teacher/putIntoCaseLib";
+    }
+
+    @RequestMapping("putIntoCaseLib")
+    @ResponseBody
+    public String putIntoCaseLib(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int topicId = Integer.parseInt(request.getParameter("id"));
+        String technology = request.getParameter("technology");
+        String group = request.getParameter("group");
+        System.out.println(group);
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        Outstandingcase outstandingcase=new Outstandingcase();
+        outstandingcase.setCasename(topic.getTopicname());
+        outstandingcase.setCasedescribe(topic.getTopicdescribe());
+        outstandingcase.setDownloadlink(topic.getResult());
+        outstandingcase.setGroupmember(group);
+        outstandingcase.setTechnology(technology);
+        outstandingcase.setSubmittime(new Date());
+        outstandingcase.setTeaid(topic.getTeaid());
+        outstandingcase.setScore(topic.getScore().toString());
+        outstandingcase.setSuggestion(topic.getSuggestion());
+        int insert = outstandingcaseService.insert(outstandingcase);
+        JSONObject object=new JSONObject();
+        if(insert>0){
+            object.put("code",1);
+            String msg="成功将题号为"+topicId+"的选题设为优秀案例";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="设置失败，请重新尝试";
+            object.put("msg",msg);
+            return object.toString();
+        }
+    }
+
+    @RequestMapping("/manageCaseLib")
+    public String manageCaseLib(Integer currentUser,Integer page,Integer Type,String Keyword, String isUpdateSuccess,Model model){
+        if(Type==1){
+        Page p=new Page();
+        p.setTotalUsers(outstandingcaseService.selectByTeaId(currentUser).size());
+        p.setPageSize(5);
+        p.setCurrentPage(page);
+        List<Outstandingcase> outstandingcases = outstandingcaseService.selectByTeaIdAndPage(currentUser, (page - 1) * p.getPageSize(), p.getPageSize());
+        List<Teacher> teachers = teacherService.selectAll();
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        model.addAttribute("page",p);
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("outstandingcases",outstandingcases);
+        model.addAttribute("currentUser",currentUser);
+        model.addAttribute("type",Type);
+        model.addAttribute("keyword",Keyword);
+        return "teacher/manageCaseLib";
+        }if(Type==2) {
+            List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByKeyWordAndTeaId(Keyword, currentUser);
+            Page p=new Page();
+            p.setTotalUsers(outstandingcasesAll.size());
+            p.setPageSize(5);
+            p.setCurrentPage(page);
+            int i=0;
+            for (Outstandingcase outstandingcase:outstandingcasesAll){
+                i++;
+            }
+            List<Outstandingcase> outstandingcases = outstandingcaseService.selectByKeyWordAndTeaIdAndPage(Keyword,currentUser, (page - 1) * p.getPageSize(), p.getPageSize());
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+            model.addAttribute("page",p);
+            model.addAttribute("teachers",teachers);
+            model.addAttribute("outstandingcases",outstandingcases);
+            model.addAttribute("currentUser",currentUser);
+            model.addAttribute("type",Type);
+            model.addAttribute("keyword",Keyword);
+            return "teacher/manageCaseLib";
+        }else {
+            Page p=new Page();
+            p.setTotalUsers(outstandingcaseService.selectAll().size());
+            p.setPageSize(5);
+            p.setCurrentPage(page);
+            List<Outstandingcase> outstandingcases = outstandingcaseService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+            model.addAttribute("page",p);
+            model.addAttribute("teachers",teachers);
+            model.addAttribute("outstandingcases",outstandingcases);
+            model.addAttribute("currentUser",currentUser);
+            model.addAttribute("type",Type);
+            model.addAttribute("keyword",Keyword);
+            return "teacher/manageCaseLib";
+        }
+    }
+
+    @RequestMapping("/getCaseDetail")
+    public String getCaseDetail(Integer id,String IsSuccess,String Keyword,Integer Type,Model model){
+        Outstandingcase outstandingcase = outstandingcaseService.selectByPrimaryKey(id);
+        model.addAttribute("outstandingcase",outstandingcase);
+        model.addAttribute("IsSuccess",IsSuccess);
+        model.addAttribute("keyword",Keyword);
+        model.addAttribute("type",Type);
+        return "teacher/updateCase";
+    }
+
+    @RequestMapping("/updateCaseById")
+    public String updateCaseById(Integer id,
+                                 String casename,
+                                 String casedescribe,
+                                 String downloadlink,
+                                 String technology,
+                                 String groupmember,
+                                 String score,
+                                 String suggestion,
+                                 Integer teaId,
+                                 String Keyword,
+                                 Integer Type,
+                                 MultipartFile file,Model model) throws UnsupportedEncodingException {
+        if(file.isEmpty()){
+            Outstandingcase outstandingcase =new Outstandingcase();
+            outstandingcase.setId(id);
+            outstandingcase.setCasename(casename);
+            outstandingcase.setCasedescribe(casedescribe);
+            outstandingcase.setDownloadlink(downloadlink);
+            outstandingcase.setTeaid(teaId);
+            outstandingcase.setSubmittime(new Date());
+            outstandingcase.setScore(score);
+            outstandingcase.setSuggestion(suggestion);
+            outstandingcase.setGroupmember(groupmember);
+            outstandingcase.setTechnology(technology);
+            int i = outstandingcaseService.updateByPrimaryKey(outstandingcase);
+            String isUpdateSuccess="成功更新"+i+"条案例";
+            return "redirect:/manageCaseLib?currentUser=" + teaId +"&Type="+Type+ "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8")+"&Keyword="+Keyword;
+        }
+        File deleteFile = new File(downloadlink);
+        if(deleteFile!=null){
+            //文件不为空，执行删除
+            deleteFile.delete();
+        }
+        Outstandingcase outstandingcase =new Outstandingcase();
+        outstandingcase.setId(id);
+        outstandingcase.setCasename(casename);
+        outstandingcase.setCasedescribe(casedescribe);
+        outstandingcase.setTeaid(teaId);
+        outstandingcase.setSubmittime(new Date());
+        outstandingcase.setScore(score);
+        outstandingcase.setSuggestion(suggestion);
+        outstandingcase.setGroupmember(groupmember);
+        outstandingcase.setTechnology(technology);
+        File dir = new File(outstandingCasePath);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
+        String path = outstandingCasePath + file.getOriginalFilename();
+        outstandingcase.setDownloadlink(path);
+        File tempFile = null;
+        try {
+            tempFile =  new File(path);
+            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+        }catch (Exception e){
+            e.printStackTrace();
+            String IsSuccess="文件上传失败";
+            return "redirect:/getCaseDetail?id="+id+"&Type="+Type+"&IsSuccess="+URLEncoder.encode(IsSuccess, "UTF-8")+"&Keyword="+Keyword;
+        }
+        int i = outstandingcaseService.updateByPrimaryKey(outstandingcase);
+        String isUpdateSuccess="成功更新"+i+"条案例";
+        return "redirect:/manageCaseLib?currentUser=" + teaId +"&Type="+Type+ "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8")+"&Keyword="+Keyword;
+    }
+
+    @RequestMapping("/deleteCase")
+    @ResponseBody
+    public String deleteCase(HttpServletRequest request) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = outstandingcaseService.deleteByPrimaryKey(id);
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除题id为"+id+"的优秀案例";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="删除失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
+    }
+
+    @RequestMapping("/onlyGetCaseDetail")
+    public String onlyGetCaseDetail(Integer id,Model model){
+        Outstandingcase outstandingcase = outstandingcaseService.selectByPrimaryKey(id);
+        Teacher teacher = teacherService.selectByPrimayKey(outstandingcase.getTeaid());
+        model.addAttribute("teacher",teacher);
+        model.addAttribute("outstandingcase",outstandingcase);
+        return "teacher/caseDetail";
     }
 }

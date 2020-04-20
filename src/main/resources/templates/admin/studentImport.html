@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>Admin</title>
+		<title>添加学生</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -50,7 +50,7 @@
 				<!--引入sidebar-->
 				<div th:replace="commons/bar::#adminsidebar(activeUri='studentImport')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h3>单独添加</h3>
+					<h5>单独添加</h5>
 					<!--需要区分是员工修改还是添加；-->
 					<form th:action="@{/addSingleStudent}" class="form-horizontal" method="post">
 
@@ -94,14 +94,19 @@
 						<button type="reset"  class="btn btn-primary">重置</button>
 					</form>
 					<br><br>
-					<h3>文件导入</h3>
-					<h4 th:inlines="text">文件上传</h4>
+					<h5>批量导入</h5>
 					<form method="post" enctype="multipart/form-data" id="form" action="/upload">
-						<input type="file" name="filename"/>
-						<input type="submit" value="提交上传"/>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="filename"><strong>上传文件:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input type="file" id="filename" name="filename"/>
+							</div>
+						</div>
 						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
+						<button type="submit" class="btn btn-primary" >添加</button>
 					</form>
-
+					<p style="color: red">注：导入的文件必须是.xls或者.xlsx格式；<br>
+						               &nbsp;&nbsp;列依次是“序号，学号，姓名，密码(初始密码:hhit+学号)，班级，指导教师id”</p>
 				</main>
 			</div>
 		</div>

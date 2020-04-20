@@ -51,6 +51,7 @@
 				<div th:replace="commons/bar::#teachersidebar(activeUri='manageGroupAndTopic')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<!--需要区分是员工修改还是添加；-->
+					<div>
 					<form th:action="@{/selectStudentByGroup}" class="form-horizontal" method="post">
 						<div class="row form-group">
 							<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="groupId"><strong>按组号查询:</strong></label>
@@ -71,6 +72,7 @@
                             <button type="submit" class="btn btn-primary" >查询</button>
                         </div>
                     </form>
+					</div>
                     <p style="color: red" th:text="${isSelectSuccess}" th:if="${not #strings.isEmpty(isSelectSuccess)}"></p>
 					<div class="table-responsive" th:if="${students}!=null">
 						<table class="table table-striped table-sm">

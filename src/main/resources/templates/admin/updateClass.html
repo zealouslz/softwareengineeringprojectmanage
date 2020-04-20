@@ -8,7 +8,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>Admin</title>
+		<title>更新班级信息</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -53,9 +53,8 @@
 				<div th:replace="commons/bar::#adminsidebar"></div>
 
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<h5>请在以下区域作出修改</h5>
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/updateClassById}" class="form-horizontal" method="post">
-
 						<div class="row form-group">
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="id"><strong>班级id：</strong></label>
 							<div class="col-lg-5 col-md-6">
@@ -72,13 +71,12 @@
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="charge"><strong>班主任：</strong></label>
 							<div class="col-lg-5 col-md-6">
 							<select class="form-control" name="charge" id="charge">
-								<option th:selected="${clazz!=null}?${clazz.charge == teacher.teaname}" th:value="${teacher.teaname}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
+								<option th:selected="${clazz!=null}?${clazz.charge.equals(teacher.teaname)}" th:value="${teacher.teaname}" th:each="teacher:${teachers}" th:text="${teacher.teaname}">1</option>
 							</select>
 							</div>
 						</div>
-						<button type="submit" class="btn btn-primary">修改</button>
-						<button  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</button>
-					</form>
+						<button  class="btn btn-primary" th:onclick="update('[[${clazz.id}]]')">修改</button>
+						<a  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</a>
 				</main>
 			</div>
 		</div>
@@ -94,6 +92,40 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+			function update(id) {
+				var classname = $("#classname").val();
+				var charge = $("#charge").val();
+				if (confirm('确定修改id为' + id + '的班级信息吗？')) {
+					$.ajax({
+						url: '/updateClassById',
+						type: "POST",
+						data: {
+							'id': id,
+							'classname':classname,
+							'charge':charge
+						},
+						dataType: "text",
+						async: false,
+						success: function (datas) {
+							var result = JSON.parse(datas);
+							var code = result.code;
+							var msg = result.msg;
+							//将json对象转换为字符串
+							if (code == 1) {
+								alert(msg);
+								window.location.href = "/manageClass?page=1";
+							} else {
+								alert(msg);
+							}
+
+						},
+						error: function () {
+							alert("提交请求失败！");
+						}
+					});
+				}
+				return false;
+			}
 		</script>
 
 	</body>

@@ -75,7 +75,7 @@
 								<td th:text="${topic.topicname}"></td>
 								<td th:text="${stagetopic.stagename}" th:if="${stagetopic.id}==${blocktask.stagetopicid}" th:each="stagetopic:${stagetopics}"></td>
 								<td th:text="${blocktask.blockname}" ></td>
-								<td th:text="${blocktask.blockdescribe}" ></td>
+								<td th:text="${#strings.abbreviate(blocktask.blockdescribe,10)}" ></td>
 								<td><a th:href="@{${blocktask.downloadlink}}" th:text="${blocktask.downloadlink}" download="" ></a></td>
 								<td th:text="${groupLeader.stuname}" ></td>
 								<td th:text="${student.stuname}" ></td>

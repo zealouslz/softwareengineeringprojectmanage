@@ -98,4 +98,10 @@ public class TopicServiceImpl implements TopicService {
         int i = topicMapper.auditTopic(id, suggestion, score, ispass);
         return i;
     }
+
+    @Override
+    public List<Topic> selectAllAndPage(Integer start, Integer pageSize) {
+        List<Topic> topics = topicMapper.selectAllAddPage(start, pageSize);
+        return topics;
+    }
 }

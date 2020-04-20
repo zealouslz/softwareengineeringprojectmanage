@@ -72,7 +72,7 @@
 							<tr th:each="stagetopic:${stagetopics}">
 								<td th:text="${stagetopic.id}"></td>
 								<td th:text="${stagetopic.stagename}"></td>
-								<td th:text="${stagetopic.stagedescribe}"></td>
+								<td th:text="${#strings.abbreviate(stagetopic.stagedescribe,10)}"></td>
 								<td th:text="${teacher.teaname}" ></td>
 								<td th:text="${#dates.format(stagetopic.releasetime,'yyyy-MM-dd HH:mm:ss')}" ></td>
 								<td th:text="${#dates.format(stagetopic.deadline,'yyyy-MM-dd HH:mm:ss')}" ></td>

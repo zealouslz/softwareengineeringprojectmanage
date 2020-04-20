@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.jws.WebParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.plaf.PanelUI;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -40,6 +41,8 @@ public class StudentController {
     StagetopicService stagetopicService;
     @Autowired
     StagetopicresultService stagetopicresultService;
+    @Autowired
+    OutstandingcaseService outstandingcaseService;
     @Autowired
     BlocktaskService blocktaskService;
     @Value("${file.uploadStageTopicResultFolder}")
@@ -894,7 +897,7 @@ public class StudentController {
         public String changeResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
             if (file.isEmpty()){
                 String isChooseSuccess="文件不能为空，请重新选择！";
-                return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
+                return "redirect:/yourtopic?stuId="+stuId+ "&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 Topic topic = topicService.selectByPrimaryKey(topicId);
                 File f = new File(topic.getResult());
@@ -929,6 +932,75 @@ public class StudentController {
                     }
                 }
             }
+        }
+
+        @RequestMapping("/selectCaseLib")
+        public String selectCaseLib(Integer teaId,Integer page,Integer Type,String Keyword, String isUpdateSuccess,Model model){
+            if(Type==1){
+                List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByTeaId(teaId);
+                Page p=new Page();
+                p.setTotalUsers(outstandingcasesAll.size());
+                p.setPageSize(5);
+                p.setCurrentPage(page);
+                int i=0;
+                for (Outstandingcase outstandingcase:outstandingcasesAll){
+                    i++;
+                }
+                List<Outstandingcase> outstandingcases = outstandingcaseService.selectByTeaIdAndPage(teaId, (page - 1) * p.getPageSize(), p.getPageSize());
+                List<Teacher> teachers = teacherService.selectAll();
+                model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+                model.addAttribute("page",p);
+                model.addAttribute("teachers",teachers);
+                model.addAttribute("outstandingcases",outstandingcases);
+                model.addAttribute("type",Type);
+                model.addAttribute("keyword",Keyword);
+                model.addAttribute("teaid",teaId);
+                return "student/selectCaseLib";
+            }if(Type==2) {
+                List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByKeyWord(Keyword);
+                Page p=new Page();
+                p.setTotalUsers(outstandingcasesAll.size());
+                p.setPageSize(5);
+                p.setCurrentPage(page);
+                int i=0;
+                for (Outstandingcase outstandingcase:outstandingcasesAll){
+                    i++;
+                }
+                List<Outstandingcase> outstandingcases = outstandingcaseService.selectByKeyWordAndPage(Keyword, (page - 1) * p.getPageSize(), p.getPageSize());
+                List<Teacher> teachers = teacherService.selectAll();
+                model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+                model.addAttribute("page",p);
+                model.addAttribute("teachers",teachers);
+                model.addAttribute("outstandingcases",outstandingcases);
+                model.addAttribute("type",Type);
+                model.addAttribute("keyword",Keyword);
+                model.addAttribute("teaid","");
+                return "student/selectCaseLib";
+            }else {
+                Page p=new Page();
+                p.setTotalUsers(outstandingcaseService.selectAll().size());
+                p.setPageSize(5);
+                p.setCurrentPage(page);
+                List<Outstandingcase> outstandingcases = outstandingcaseService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+                List<Teacher> teachers = teacherService.selectAll();
+                model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+                model.addAttribute("page",p);
+                model.addAttribute("teachers",teachers);
+                model.addAttribute("outstandingcases",outstandingcases);
+                model.addAttribute("type",Type);
+                model.addAttribute("keyword",Keyword);
+                model.addAttribute("teaid","");
+                return "student/selectCaseLib";
+            }
+        }
+
+        @RequestMapping("/stuGetCaseDetail")
+        public String stuGetCaseDetail(Integer id,Model model){
+            Outstandingcase outstandingcase = outstandingcaseService.selectByPrimaryKey(id);
+            Teacher teacher = teacherService.selectByPrimayKey(outstandingcase.getTeaid());
+            model.addAttribute("teacher",teacher);
+            model.addAttribute("outstandingcase",outstandingcase);
+            return "student/stuCaseDetail";
         }
 }
 

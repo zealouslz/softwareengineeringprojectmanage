@@ -62,7 +62,7 @@
 							</tr>
 							<tr>
 								<td>选题描述</td>
-								<td th:text="${topic.topicdescribe}"></td>
+								<td th:text="${#strings.abbreviate(topic.topicdescribe,20)}"></td>
 							</tr>
 							<tr>
 								<td>参考文档</td>

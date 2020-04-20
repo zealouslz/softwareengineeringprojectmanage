@@ -8,6 +8,7 @@ import java.util.List;
 public interface TopicService {
     List<Topic> selectByTeacherId(Integer teacherId);
     List<Topic> selectAll();
+    List<Topic> selectAllAndPage(Integer start,Integer pageSize);
     List<Topic> selectByTeaIdAddPage(Integer teacherId,Integer start,Integer pageSize);
     int insert(Topic topic);
     Topic selectByPrimaryKey(Integer id);

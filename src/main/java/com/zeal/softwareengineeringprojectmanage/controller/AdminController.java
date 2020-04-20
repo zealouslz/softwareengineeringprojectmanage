@@ -2,26 +2,29 @@ package com.zeal.softwareengineeringprojectmanage.controller;
 
 import com.sun.deploy.net.HttpResponse;
 import com.zeal.softwareengineeringprojectmanage.bean.*;
-import com.zeal.softwareengineeringprojectmanage.service.ClazzService;
-import com.zeal.softwareengineeringprojectmanage.service.ImportService;
-import com.zeal.softwareengineeringprojectmanage.service.StudentService;
-import com.zeal.softwareengineeringprojectmanage.service.TeacherService;
+import com.zeal.softwareengineeringprojectmanage.service.*;
+import org.apache.commons.io.FileUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Controller
@@ -34,6 +37,14 @@ public class AdminController {
     ClazzService clazzService;
     @Autowired
     private ImportService importService;
+    @Autowired
+    TopicService topicService;
+    @Value("${file.uploadOutstandingCaseFolder}")
+    private String outstandingCasePath;
+    @Value("${file.uploadTopicFolder}")
+    private String uploadTopicFilePath; //选题文件上传的地址
+    @Autowired
+    OutstandingcaseService outstandingcaseService;
 
 
     @RequestMapping("/addSingleStudent")
@@ -147,9 +158,9 @@ public class AdminController {
         return "admin/manageStu";
     }
 
-    @RequestMapping("/getStuDetail/{stuid}")
-    public String updateStu(@PathVariable("stuid") Integer stuid,Model model){
-        Student student = studentService.selectByStuId(stuid);
+    @RequestMapping("/getStuDetail")
+    public String updateStu(Integer stuId,Model model){
+        Student student = studentService.selectByStuId(stuId);
         model.addAttribute("student",student);
         List<Clazz> clazzes = clazzService.selectAll();
         model.addAttribute("clazzes",clazzes);
@@ -157,9 +168,9 @@ public class AdminController {
         model.addAttribute("teachers",teachers);
         return "admin/updateStu";
     }
-    @RequestMapping("/getTeaDetail/{id}")
-    public String updateTea(@PathVariable("id") Integer id,Model model){
-        Teacher teacher = teacherService.selectByPrimayKey(id);
+    @RequestMapping("/getTeaDetail")
+    public String updateTea(Integer teaId,Model model){
+        Teacher teacher = teacherService.selectByPrimayKey(teaId);
         model.addAttribute("teacher",teacher);
         return "admin/updateTea";
     }
@@ -175,35 +186,76 @@ public class AdminController {
         Integer topicid = student.getTopicid();
         int i = studentService.updateByStuId(stuid,stuname,password,classid,teaid,isgroupleader,groupid,topicid);
         String isUpdateSuccess="成功修改了"+i+"条数据";
-        return "redirect:/student/page?classid="+classid+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        return "redirect:/studentByPage?classid="+classid+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
     @RequestMapping("/updateTeaById")
-    public String updateTeaById(Teacher teacher,Model model) throws UnsupportedEncodingException {
+    @ResponseBody
+    public String updateTeaById(HttpServletRequest request,HttpServletResponse response) throws UnsupportedEncodingException, JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        String teaname = request.getParameter("teaname");
+        String password = request.getParameter("password");
+        int teaid = Integer.parseInt(request.getParameter("teaid"));
+        Teacher teacher=new Teacher();
+        teacher.setId(id);
+        teacher.setTeaid(teaid);
+        teacher.setTeaname(teaname);
+        teacher.setPassword(password);
         TeacherExample teacherExample=new TeacherExample();
         TeacherExample.Criteria criteria = teacherExample.createCriteria();
         criteria.andIdEqualTo(teacher.getId());
         int i = teacherService.updateByExample(teacher,teacherExample);
-        String isUpdateSuccess="成功修改了"+i+"条数据";
-        return "redirect:/teacher/page?&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功修改id为"+id+"的教师信息";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="修改失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
     }
-    @RequestMapping("/upDateStu/delete/{stuid}")
-    public String deleteStuByStuId(@PathVariable("stuid") Integer stuId,
-                                   Model model) throws UnsupportedEncodingException {
-        Student student = studentService.selectByStuId(stuId);
-        Integer classid = student.getClassid();
-        int i = studentService.deleteStuByStuId(stuId);
-        String isUpdateSuccess="成功删除了"+i+"条数据";
-        return "redirect:/student/page?classid="+classid+ "&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    @RequestMapping("/deleteStu")
+    @ResponseBody
+    public String deleteStuByStuId(HttpServletRequest request) throws UnsupportedEncodingException, JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = studentService.deleteStuByStuId(id);
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除学号为"+id+"的学生";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="删除失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
     }
-    @RequestMapping("/upDateTea/delete/{id}")
-    public String deleteTeaById(@PathVariable("id") Integer Id,
-                                   Model model) throws UnsupportedEncodingException {
-        int i = teacherService.deleteByPrimaryKey(Id);
-        String isUpdateSuccess="成功删除了"+i+"条数据";
-        return "redirect:/teacher/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+    @RequestMapping("/deleteTea")
+    @ResponseBody
+    public String deleteTeaById(HttpServletRequest request,HttpServletResponse response) throws UnsupportedEncodingException, JSONException {
+
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = teacherService.deleteByPrimaryKey(id);
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除id为"+id+"的教师";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="删除失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
     }
 
-    @RequestMapping(value = "/student/page")
+    @RequestMapping(value = "/studentByPage")
     public String findStuByPage(String classid,int page,String isUpdateSuccess, Model model) {
             List<Clazz> clazzes = clazzService.selectAll();
             model.addAttribute("clazzes",clazzes);
@@ -221,7 +273,7 @@ public class AdminController {
             return "admin/manageStu";
     }
 
-    @RequestMapping("/teacher/page")
+    @RequestMapping("/manageTea")
     public String findTeaByPage(int page,String isUpdateSuccess,Model model){
         Page p=new Page();
         p.setTotalUsers(teacherService.selectAll().size());
@@ -233,7 +285,7 @@ public class AdminController {
         return "admin/manageTea";
     }
 
-    @RequestMapping("/manageClass/page")
+    @RequestMapping("/manageClass")
     public String ManageClass(int page,String isUpdateSuccess ,Model model ){
         Page p=new Page();
         p.setTotalUsers(clazzService.selectAll().size());
@@ -256,7 +308,7 @@ public class AdminController {
     public String addSingleClass(Clazz clazz) throws UnsupportedEncodingException {
         int insert = clazzService.insert(clazz);
         String isUpdateSuccess="成功添加"+insert+"条数据";
-        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        return "redirect:/manageClass?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
 
     @RequestMapping(value="/classUpload",method= RequestMethod.POST)
@@ -291,12 +343,12 @@ public class AdminController {
             //调用mapper中的insert方法
         }
         String isUpdateSuccess="成功添加"+insert+"条数据";
-        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        return "redirect:/manageClass?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
     }
 
-    @RequestMapping("/getClassDetail/{id}")
-    public String updateClass(@PathVariable("id") Integer id,Model model){
-        Clazz clazz = clazzService.selectByPrimaryKey(id);
+    @RequestMapping("/getClassDetail")
+    public String updateClass( Integer classId,Model model){
+        Clazz clazz = clazzService.selectByPrimaryKey(classId);
         model.addAttribute("clazz",clazz);
         List<Teacher> teachers = teacherService.selectAll();
         model.addAttribute("teachers",teachers);
@@ -304,16 +356,376 @@ public class AdminController {
     }
 
     @RequestMapping("/updateClassById")
-    public String updateClassById(Clazz clazz) throws UnsupportedEncodingException {
+    @ResponseBody
+    public String updateClassById(HttpServletRequest request,HttpServletResponse response) throws UnsupportedEncodingException, JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        String classname = request.getParameter("classname");
+        String charge = request.getParameter("charge");
+        Clazz clazz =new Clazz();
+        clazz.setId(id);
+        clazz.setCharge(charge);
+        clazz.setClassname(classname);
         int i = clazzService.updateByPrimaryKey(clazz);
-        String isUpdateSuccess="成功修改"+i+"条数据";
-        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功修改id为"+id+"的班级信息";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="修改失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
     }
 
-    @RequestMapping("/upDateClass/delete/{id}")
-    public String deleteClassById(@PathVariable("id") Integer id) throws UnsupportedEncodingException {
+    @RequestMapping("/deleteClass")
+    @ResponseBody
+    public String deleteClassById(HttpServletResponse response,HttpServletRequest request) throws UnsupportedEncodingException, JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
         int i = clazzService.deleteByClassId(id);
-        String isUpdateSuccess="成功删除"+i+"条数据";
-        return "redirect:/manageClass/page?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除id为"+id+"的班级信息";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="删除失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
+    }
+
+    @RequestMapping("/adminManageCase")
+    public String adminManageCase(Integer teaId,Integer page,Integer Type,String Keyword, String isUpdateSuccess,Model model){
+        if(Type==1){
+            List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByTeaId(teaId);
+            Page p=new Page();
+            p.setTotalUsers(outstandingcasesAll.size());
+            p.setPageSize(5);
+            p.setCurrentPage(page);
+            int i=0;
+            for (Outstandingcase outstandingcase:outstandingcasesAll){
+                i++;
+            }
+            List<Outstandingcase> outstandingcases = outstandingcaseService.selectByTeaIdAndPage(teaId, (page - 1) * p.getPageSize(), p.getPageSize());
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+            model.addAttribute("page",p);
+            model.addAttribute("teachers",teachers);
+            model.addAttribute("outstandingcases",outstandingcases);
+            model.addAttribute("type",Type);
+            model.addAttribute("keyword",Keyword);
+            model.addAttribute("teaid",teaId);
+            return "admin/adminManageCaseLib";
+        }if(Type==2) {
+            List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByKeyWord(Keyword);
+            Page p=new Page();
+            p.setTotalUsers(outstandingcasesAll.size());
+            p.setPageSize(5);
+            p.setCurrentPage(page);
+            int i=0;
+            for (Outstandingcase outstandingcase:outstandingcasesAll){
+                i++;
+            }
+            List<Outstandingcase> outstandingcases = outstandingcaseService.selectByKeyWordAndPage(Keyword, (page - 1) * p.getPageSize(), p.getPageSize());
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+            model.addAttribute("page",p);
+            model.addAttribute("teachers",teachers);
+            model.addAttribute("outstandingcases",outstandingcases);
+            model.addAttribute("type",Type);
+            model.addAttribute("keyword",Keyword);
+            model.addAttribute("teaid","");
+            return "admin/adminManageCaseLib";
+        }else {
+            Page p=new Page();
+            p.setTotalUsers(outstandingcaseService.selectAll().size());
+            p.setPageSize(5);
+            p.setCurrentPage(page);
+            List<Outstandingcase> outstandingcases = outstandingcaseService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+            List<Teacher> teachers = teacherService.selectAll();
+            model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+            model.addAttribute("page",p);
+            model.addAttribute("teachers",teachers);
+            model.addAttribute("outstandingcases",outstandingcases);
+            model.addAttribute("type",Type);
+            model.addAttribute("keyword",Keyword);
+            model.addAttribute("teaid","");
+            return "admin/adminManageCaseLib";
+        }
+
+    }
+    @RequestMapping("/adminGetCaseDetail")
+    public String adminGetCaseDetail(Integer id,String IsSuccess,String Keyword,Integer Type,Integer teaId,Model model){
+        Outstandingcase outstandingcase = outstandingcaseService.selectByPrimaryKey(id);
+        List<Teacher> teachers = teacherService.selectAll();
+        model.addAttribute("outstandingcase",outstandingcase);
+        model.addAttribute("IsSuccess",IsSuccess);
+        model.addAttribute("keyword",Keyword);
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("type",Type);
+        model.addAttribute("teaid",teaId);
+        return "admin/adminUpdateCase";
+    }
+
+    @RequestMapping("/adminUpdateCaseById")
+    public String adminUpdateCaseById(Integer id,
+                                      String casename,
+                                      String casedescribe,
+                                      String downloadlink,
+                                      String technology,
+                                      String groupmember,
+                                      String score,
+                                      String suggestion,
+                                      Integer teaId,
+                                      Integer teaid,
+                                      String Keyword,
+                                      Integer Type,
+                                      MultipartFile file,Model model) throws UnsupportedEncodingException {
+        if(file.isEmpty()){
+            Outstandingcase outstandingcase =new Outstandingcase();
+            outstandingcase.setId(id);
+            outstandingcase.setCasename(casename);
+            outstandingcase.setCasedescribe(casedescribe);
+            outstandingcase.setDownloadlink(downloadlink);
+            outstandingcase.setSubmittime(new Date());
+            outstandingcase.setScore(score);
+            outstandingcase.setSuggestion(suggestion);
+            outstandingcase.setGroupmember(groupmember);
+            outstandingcase.setTechnology(technology);
+            outstandingcase.setTeaid(teaid);
+            int i = outstandingcaseService.updateByPrimaryKey(outstandingcase);
+            String isUpdateSuccess="成功更新"+i+"条案例";
+            if(teaId==null) {
+                return "redirect:/adminManageCase?teaId="+ "&Type=" + Type + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&Keyword=" + Keyword;
+            }else {
+                return "redirect:/adminManageCase?teaId="+teaId+ "&Type=" + Type + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&Keyword=" + Keyword;
+            }
+        }
+        File deleteFile = new File(downloadlink);
+        if(deleteFile!=null){
+            //文件不为空，执行删除
+            deleteFile.delete();
+        }
+        Outstandingcase outstandingcase =new Outstandingcase();
+        outstandingcase.setId(id);
+        outstandingcase.setCasename(casename);
+        outstandingcase.setCasedescribe(casedescribe);
+        outstandingcase.setSubmittime(new Date());
+        outstandingcase.setScore(score);
+        outstandingcase.setSuggestion(suggestion);
+        outstandingcase.setGroupmember(groupmember);
+        outstandingcase.setTechnology(technology);
+        outstandingcase.setTeaid(teaid);
+        File dir = new File(outstandingCasePath);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
+        String path = outstandingCasePath + file.getOriginalFilename();
+        outstandingcase.setDownloadlink(path);
+        File tempFile = null;
+        try {
+            tempFile =  new File(path);
+            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+        }catch (Exception e){
+            e.printStackTrace();
+            String IsSuccess="文件上传失败";
+            return "redirect:/adminGetCaseDetail?id="+id+"&Type="+Type+"&IsSuccess="+URLEncoder.encode(IsSuccess, "UTF-8")+"&Keyword="+Keyword+"&teaId="+teaId;
+        }
+        int i = outstandingcaseService.updateByPrimaryKey(outstandingcase);
+        String isUpdateSuccess="成功更新"+i+"条案例";
+        return "redirect:/adminManageCase?teaId=" + teaId +"&Type="+Type+ "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8")+"&Keyword="+Keyword;
+    }
+
+    @RequestMapping("/adminDeleteCase")
+    @ResponseBody
+    public String adminDeleteCase(HttpServletRequest request) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = outstandingcaseService.deleteByPrimaryKey(id);
+        JSONObject object=new JSONObject();
+        if(i>0){
+            object.put("code",1);
+            String msg="成功删除题id为"+id+"的优秀案例";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            String msg="删除失败，请重新尝试！";
+            object.put("msg",msg);
+            return object.toString();
+        }
+    }
+
+    @RequestMapping("/adminManageTopic")
+    public  String adminManageTopic(Integer page,Integer teaId,Integer Type,String isUpdateSuccess,Model model){
+       if(Type==1) {
+           List<Topic> topicsAll= topicService.selectByTeacherId(teaId);
+           Page p=new Page();
+           p.setCurrentPage(page);
+           p.setPageSize(5);
+           p.setTotalUsers(topicsAll.size());
+           int i=0;
+           for(Topic topic:topicsAll){
+               i++;
+           }
+           List<Topic> topics = topicService.selectByTeaIdAddPage(teaId,(page - 1) * p.getPageSize(), p.getPageSize());
+           model.addAttribute("topics",topics);
+           model.addAttribute("page",p);
+           model.addAttribute("isUpdateSuccess","查询到"+i+"条选题");
+           List<Teacher> teachers = teacherService.selectAll();
+           model.addAttribute("teachers",teachers);
+           if (teaId==null){
+               model.addAttribute("teaid","");
+           }else {
+           model.addAttribute("teaid",teaId);
+           }
+           model.addAttribute("type",Type);
+           return "admin/adminManageTopic";
+       }else{
+           Page p = new Page();
+           p.setCurrentPage(page);
+           p.setPageSize(5);
+           p.setTotalUsers(topicService.selectAll().size());
+           List<Topic> topics = topicService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+           model.addAttribute("topics", topics);
+           model.addAttribute("page", p);
+           model.addAttribute("isUpdateSuccess", isUpdateSuccess);
+           List<Teacher> teachers = teacherService.selectAll();
+           model.addAttribute("teachers", teachers);
+           if (teaId==null){
+               model.addAttribute("teaid","");
+           }else {
+               model.addAttribute("teaid",teaId);
+           }
+           model.addAttribute("type",Type);
+           return "admin/adminManageTopic";
+       }
+    }
+
+    @RequestMapping("/adminGetTopicDetail")
+    public String adminGetTopicDetail(Integer topicId,Integer teaId,Integer Type,String IsSuccess,Model model){
+        Topic topic = topicService.selectByPrimaryKey(topicId);
+        model.addAttribute("topic",topic);
+        Teacher teacher = teacherService.selectByPrimayKey(topic.getTeaid());
+        model.addAttribute("teacher",teacher);
+        model.addAttribute("IsSuccess",IsSuccess);
+        model.addAttribute("teaid",teaId);
+        model.addAttribute("type",Type);
+        return "admin/adminUpdateTopic";
+    }
+
+    @RequestMapping("/adminUpdateTopicById")
+    public String adminUpdateTopicById(@RequestParam("id")Integer id,
+                                       @RequestParam("topicname")String topicname,
+                                       @RequestParam("topicdescribe") String topicdescribe,
+                                       Integer teaId,
+                                       Integer Type,
+                                       @RequestParam("teaid") Integer teaid,
+                                       @RequestParam("deadline")String deadline,
+                                       @RequestParam("choosedeadline")String choosedeadline,
+                                       @RequestParam("maxsize") Integer maxsize,
+                                       @RequestParam("downloadlink") String downloadlink,
+                                       @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
+        if(file.isEmpty()){
+            Topic topic =new Topic();
+            topic.setId(id);
+            topic.setTopicname(topicname);
+            topic.setTopicdescribe(topicdescribe);
+            topic.setTeaid(teaid);
+            Date date1=new Date();
+            topic.setReleasetime(date1);
+            String[] str1 = deadline.split("[T]");
+            String[] str2 = choosedeadline.split("[T]");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date date2 = simpleDateFormat.parse(str1[0]+" "+str1[1]);
+            Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+            topic.setDeadline(date2);
+            topic.setChoosedeadline(date3);
+            topic.setMaxsize(maxsize);
+            topic.setDownloadlink(downloadlink);
+            int i = topicService.updateByPrimaryKey(topic);
+            String isUpdateSuccess="成功更新"+i+"条选题";
+            if(teaId==null){
+                return "redirect:/adminManageTopic?page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&teaId=" + "&Type=" + Type;
+            }else {
+                return "redirect:/adminManageTopic?page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&teaId=" + teaId + "&Type=" + Type;
+            }
+        }
+        File deleteFile = new File(downloadlink);
+        if(deleteFile!=null){
+            //文件不为空，执行删除
+            deleteFile.delete();
+        }
+        Topic topic =new Topic();
+        topic.setId(id);
+        topic.setTopicname(topicname);
+        topic.setTopicdescribe(topicdescribe);
+        topic.setTeaid(teaid);
+        Date date1=new Date();
+        topic.setReleasetime(date1);
+        String[] str = deadline.split("[T]");
+        String[] str2 = choosedeadline.split("[T]");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date date = simpleDateFormat.parse(str[0]+" "+str[1]);
+        Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
+        topic.setChoosedeadline(date3);
+        topic.setDeadline(date);
+        topic.setMaxsize(maxsize);
+        File dir = new File(uploadTopicFilePath);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
+        String path = uploadTopicFilePath + file.getOriginalFilename();
+        topic.setDownloadlink(path);
+        File tempFile =  tempFile =  new File(path);
+        if(tempFile.exists()){
+            String IsSuccess="文件已存在，请重新选择！";
+            if (teaId==null){
+                return "redirect:/adminGetTopicDetail?topicId=" + id + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8") + "&teaId="  + "&Type=" + Type;
+            }else {
+                return "redirect:/adminGetTopicDetail?topicId=" + id + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8") + "&teaId=" + teaId + "&Type=" + Type;
+            }
+        }else {
+            try {
+                FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+                String IsSuccess = "文件上传失败";
+                if (teaId==null){
+                    return "redirect:/adminGetTopicDetail?topicId=" + id + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8") + "&teaId="  + "&Type=" + Type;
+                }else {
+                    return "redirect:/adminGetTopicDetail?topicId=" + id + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8") + "&teaId=" + teaId + "&Type=" + Type;
+                }
+            }
+            int i = topicService.updateByPrimaryKey(topic);
+            String isUpdateSuccess = "成功更新" + i + "条选题";
+            if(teaId==null){
+                return "redirect:/adminManageTopic?page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&teaId=" + "&Type=" + Type;
+            }else {
+                return "redirect:/adminManageTopic?page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&teaId=" + teaId + "&Type=" + Type;
+            }
+        }
+    }
+
+    @RequestMapping("/adminDeleteTopic")
+    @ResponseBody
+    public String adminDeleteTopic(HttpServletRequest request, HttpServletResponse response) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int i = topicService.deleteByPrimary(id);
+        JSONObject object = new JSONObject();
+        if(i>0) {
+            object.put("code",1);
+            String msg="成功删除了"+i+"条选题";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            object.put("code",-1);
+            object.put("msg","删除失败，请重新尝试！！");
+            return object.toString();
+        }
     }
 }

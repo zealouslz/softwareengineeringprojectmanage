@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>Admin</title>
+		<title>管理班级信息</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -70,34 +70,34 @@
 								<td th:text="${class.classname}"></td>
 								<td th:text="${class.charge}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getClassDetail/}+${class.id}">编辑</a>
-									<a th:href="@{/upDateClass/delete/}+${class.id}" class="btn btn-sm btn-danger deleteBtn">删除</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getClassDetail}+'?classId='+${class.id}">编辑</a>
+									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${class.id}]]')">删除</a>
 								</td>
 							</tr>
 							</tbody>
 						</table>
 						<table  th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/manageClass/page}">
+								<form  th:action="@{/manageClass}">
 									<td><input type="hidden" name="page" th:value="1"></td>
 									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/manageClass/page}">
+								<form  th:action="@{/manageClass}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/manageClass/page}">
+								<form  th:action="@{/manageClass}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/manageClass/page}">
+								<form  th:action="@{/manageClass}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/manageClass/page}">
+								<form  th:action="@{/manageClass}">
 									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
 									<td><input type="submit" value="确定"></td>
 								</form>
@@ -120,6 +120,36 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+			function dele(id) {
+				if (confirm('确定删除id为' + id + '的教师信息吗？')) {
+					$.ajax({
+						url: '/deleteClass',
+						type: "POST",
+						data: {
+							'id': id
+						},
+						dataType: "text",
+						async: false,
+						success: function (datas) {
+							var result = JSON.parse(datas);
+							var code = result.code;
+							var msg = result.msg;
+							//将json对象转换为字符串
+							if (code == 1) {
+								alert(msg);
+								window.location.href = "/manageClass?page=1";
+							} else {
+								alert(msg);
+							}
+
+						},
+						error: function () {
+							alert("提交请求失败！");
+						}
+					});
+				}
+				return false;
+			}
 		</script>
 
 		<!-- Graphs -->
