@@ -2,8 +2,11 @@ package com.zeal.softwareengineeringprojectmanage.controller;
 
 import com.sun.org.apache.bcel.internal.generic.NEW;
 import com.zeal.softwareengineeringprojectmanage.bean.*;
+import com.zeal.softwareengineeringprojectmanage.mapper.ScoreMapper;
 import com.zeal.softwareengineeringprojectmanage.service.*;
+import com.zeal.softwareengineeringprojectmanage.util.ExcelUtil;
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import javax.sound.midi.Soundbank;
 import javax.swing.event.ListDataEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
@@ -40,6 +44,10 @@ public class TeacherController {
     StudentService studentService;
     @Autowired
     StagetopicService stagetopicService;
+    @Autowired
+    ScoreService scoreService;
+    @Autowired
+    BlocktaskService blocktaskService;
     @Autowired
     StagetopicresultService stagetopicresultService;
     @Autowired
@@ -923,5 +931,204 @@ public class TeacherController {
         model.addAttribute("teacher",teacher);
         model.addAttribute("outstandingcase",outstandingcase);
         return "teacher/caseDetail";
+    }
+
+    @RequestMapping("/importReplyScoreHtml")
+    public String importReplyScoreHtml(Integer currentUser,Integer page,String classId, String stuId,String isUpdateSuccess,Integer type,Model model){
+        List<Clazz> clazzes = clazzService.selectAll();
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(8);
+        List<Student> students = null;
+        List<Score> scores = scoreService.selectAll();
+        List<Teacher> teachers = teacherService.selectAll();
+        List<Topic> topics = topicService.selectAll();
+        if(type==0) {
+            List<Student> studentAll = studentService.selectByTeaId(currentUser);
+            p.setTotalUsers(studentAll.size());
+            isUpdateSuccess="成功查询到"+studentAll.size()+"个学生";
+             students = studentService.selectByTeaIdAndPage(currentUser, (page - 1) * p.getPageSize(), p.getPageSize());
+        }else if(type==1){
+            List<Student> studentAll = studentService.selectByClazzId(Integer.parseInt(classId));
+            p.setTotalUsers(studentAll.size());
+            isUpdateSuccess="成功查询到"+studentAll.size()+"个学生";
+            students=studentService.selectByClazzIdLimit(Integer.parseInt(classId),(page - 1) * p.getPageSize(), p.getPageSize());
+        }else {
+            Student studentAll = studentService.selectByStuId(Integer.parseInt(stuId));
+            if (studentAll==null){
+                isUpdateSuccess="该学生不存在，请重新输入";
+                p.setTotalUsers(0);
+            }else {
+                isUpdateSuccess="成功查询到一个学生";
+                p.setTotalUsers(1);
+                List<Student> studentAll1=new ArrayList<>();
+                studentAll1.add(studentAll);
+                students=studentAll1;
+            }
+        }
+        model.addAttribute("page",p);
+        model.addAttribute("students",students);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        model.addAttribute("currentUser",currentUser);
+        if(classId==null){
+            model.addAttribute("classId","");
+        }
+        model.addAttribute("classId",classId);
+        model.addAttribute("type",type);
+        if (stuId==null){
+            model.addAttribute("stuId","");
+        }
+        model.addAttribute("stuId",stuId);
+        model.addAttribute("clazzes",clazzes);
+        model.addAttribute("scores",scores);
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("topics",topics);
+        return "teacher/importReplyScore";
+    }
+
+    @RequestMapping("/importReplyScore")
+    public String importReplyScore(Integer id,Integer teaId,String classId, String stuId,Integer type,Model model){
+        Score score = scoreService.selectByPrimaryKey(id);
+        Student student = studentService.selectByPrimaryKey(score.getId());
+        Topic topic = topicService.selectByPrimaryKey(score.getTopicid());
+        model.addAttribute("topic",topic);
+        model.addAttribute("currentUser",teaId);
+        model.addAttribute("classId",classId);
+        model.addAttribute("stuId",stuId);
+        model.addAttribute("type",type);
+        model.addAttribute("score",score);
+        model.addAttribute("student",student);
+        return "teacher/giveMarkAndSuggestion";
+    }
+
+    @RequestMapping("/giveMarkAndSuggestion")
+    @ResponseBody
+    public String giveMarkAndSuggestion(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        String suggestion = request.getParameter("suggestion");
+        int score = Integer.parseInt(request.getParameter("score"));
+        int id = Integer.parseInt(request.getParameter("id"));
+        Score oldScore = scoreService.selectByPrimaryKey(id);
+        JSONObject object=new JSONObject();
+        if(oldScore.getBlocktime()==0 ||oldScore.getGropleaderscore()==0||oldScore.getAttendancescore()==0){
+            object.put("code",-1);
+            String msg="组长或者报告还没评分，请等待评分之后再操作";
+            object.put("msg",msg);
+            return object.toString();
+        }else {
+            Double finalScore = (oldScore.getGropleaderscore()/oldScore.getBlocktime())*0.2+oldScore.getAttendancescore()*0.4+score*0.4;
+            int i = scoreService.updateReplyScoreAndSugg(id, score, finalScore.floatValue(), suggestion);
+            if(i>0){
+                object.put("code",1);
+                String msg="成功给学号为"+oldScore.getStuid()+"的同学评分";
+                object.put("msg",msg);
+                return object.toString();
+            }else {
+                object.put("code",-1);
+                String msg="评分失败，请重新尝试！";
+                object.put("msg",msg);
+                return object.toString();
+            }
+        }
+    }
+    @RequestMapping("/blockDetail")
+    public String blockDetail(Integer stuId,Model model){
+        List<Blocktask> blocktasks = blocktaskService.selectByStuId(stuId);
+        Student student = studentService.selectByPrimaryKey(stuId);
+        Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
+        List<Stagetopic> stagetopics = stagetopicService.selectAll();
+        model.addAttribute("blocktasks",blocktasks);
+        model.addAttribute("student",student);
+        model.addAttribute("topic",topic);
+        model.addAttribute("stagetopics",stagetopics);
+        return "teacher/blockDetail";
+    }
+    /**
+     * 根据条件将数据导出为Excel
+     * 如果需要浏览器发送请求时即下载Excel，就不能用ajax进行传输，所以这里用GET方式进行提交
+     *
+     * @return
+     */
+    @ResponseBody
+    @RequestMapping(value = "/exportExcel")
+    public void exportExcel(HttpServletRequest request, HttpServletResponse response) {
+        Integer classId = Integer.parseInt(request.getParameter("classId"));
+        List<Student> students = studentService.selectByClazzId(classId);
+        List<Score> scores = scoreService.selectAll();
+        List<Teacher> teachers = teacherService.selectAll();
+        List<Clazz> clazzes = clazzService.selectAll();
+        List<Topic> topics = topicService.selectAll();
+        String[] title = {"ID", "学号", "姓名", "班级", "指导教师", "选题名", "组长评分","完成任务次数","报告得分","答辩得分","最终得分"};
+        String filename =clazzService.selectByPrimaryKey(classId).getClassname()+".xls";
+        String sheetName = "sheet1";
+        String[][] content = new String[students.size()][11];
+        int i=0;
+        try {
+                for (Student student : students) {
+                    for (Score score : scores) {
+                        if (student.getId().intValue() == score.getId().intValue()) {
+                            content[i][0] = String.valueOf(student.getId());
+                            content[i][1] = String.valueOf(student.getStuid());
+                            content[i][2] = String.valueOf(student.getStuname());
+                            for(Clazz clazz:clazzes) {
+                                if(clazz.getId().intValue()==student.getClassid().intValue()){
+                                content[i][3] = clazz.getClassname();
+                                }
+                            }
+                            for(Teacher teacher:teachers){
+                                if(teacher.getId().intValue()==student.getTeaid()) {
+                                    content[i][4] = teacher.getTeaname();
+                                }
+                            }
+                            for (Topic topic:topics) {
+                                if (topic.getId().intValue()==student.getTopicid()) {
+                                    content[i][5] = String.valueOf(topic.getTopicname());
+                                }
+                            }
+                            if(score.getBlocktime()==0){
+                                content[i][6] = String.valueOf(0);
+                            }else {
+                                content[i][6] = String.valueOf(score.getGropleaderscore() / score.getBlocktime());
+                            }
+                            content[i][7] = String.valueOf(score.getBlocktime());
+                            content[i][8] = String.valueOf(score.getAttendancescore());
+                            content[i][9] = String.valueOf(score.getReplyscore());
+                            content[i][10] = String.valueOf(score.getFinalscore());
+                        }
+                    }
+                    i=i+1;
+                }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        HSSFWorkbook wb = ExcelUtil.getHSSFWorkbook(sheetName, title, content, null);
+        try {
+            // 响应到客户端
+            this.setResponseHeader(response, filename);
+            OutputStream os = response.getOutputStream();
+            wb.write(os);
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 向客户端发送响应流方法
+     *
+     * @param response
+     * @param fileName
+     */
+    public void setResponseHeader(HttpServletResponse response, String fileName) {
+        try {
+            try {
+                fileName = new String(fileName.getBytes(), "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            response.setContentType("application/vnd.ms-excel");
+            response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

@@ -11,8 +11,8 @@
     <result column="teaId" property="teaid" jdbcType="INTEGER" />
     <result column="topicId" property="topicid" jdbcType="INTEGER" />
     <result column="gropLeaderScore" property="gropleaderscore" jdbcType="INTEGER" />
-    <result column="attendanceScore" property="attendancescore" jdbcType="REAL" />
-    <result column="replyScore" property="replyscore" jdbcType="REAL" />
+    <result column="attendanceScore" property="attendancescore" jdbcType="INTEGER" />
+    <result column="replyScore" property="replyscore" jdbcType="INTEGER" />
     <result column="suggestion" property="suggestion" jdbcType="VARCHAR" />
     <result column="blockTime" property="blocktime" jdbcType="INTEGER" />
     <result column="finalScore" property="finalscore" jdbcType="REAL" />
@@ -147,8 +147,8 @@
       replyScore, suggestion, blockTime, 
       finalScore)
     values (#{id,jdbcType=INTEGER}, #{stuid,jdbcType=INTEGER}, #{teaid,jdbcType=INTEGER}, 
-      #{topicid,jdbcType=INTEGER}, #{gropleaderscore,jdbcType=INTEGER}, #{attendancescore,jdbcType=REAL}, 
-      #{replyscore,jdbcType=REAL}, #{suggestion,jdbcType=VARCHAR}, #{blocktime,jdbcType=INTEGER}, 
+      #{topicid,jdbcType=INTEGER}, #{gropleaderscore,jdbcType=INTEGER}, #{attendancescore,jdbcType=INTEGER}, 
+      #{replyscore,jdbcType=INTEGER}, #{suggestion,jdbcType=VARCHAR}, #{blocktime,jdbcType=INTEGER}, 
       #{finalscore,jdbcType=REAL})
   </insert>
   <insert id="insertSelective" parameterType="com.zeal.softwareengineeringprojectmanage.bean.Score" >
@@ -206,10 +206,10 @@
         #{gropleaderscore,jdbcType=INTEGER},
       </if>
       <if test="attendancescore != null" >
-        #{attendancescore,jdbcType=REAL},
+        #{attendancescore,jdbcType=INTEGER},
       </if>
       <if test="replyscore != null" >
-        #{replyscore,jdbcType=REAL},
+        #{replyscore,jdbcType=INTEGER},
       </if>
       <if test="suggestion != null" >
         #{suggestion,jdbcType=VARCHAR},
@@ -255,10 +255,10 @@
         gropLeaderScore = #{record.gropleaderscore,jdbcType=INTEGER},
       </if>
       <if test="record.attendancescore != null" >
-        attendanceScore = #{record.attendancescore,jdbcType=REAL},
+        attendanceScore = #{record.attendancescore,jdbcType=INTEGER},
       </if>
       <if test="record.replyscore != null" >
-        replyScore = #{record.replyscore,jdbcType=REAL},
+        replyScore = #{record.replyscore,jdbcType=INTEGER},
       </if>
       <if test="record.suggestion != null" >
         suggestion = #{record.suggestion,jdbcType=VARCHAR},
@@ -285,8 +285,8 @@
       teaId = #{record.teaid,jdbcType=INTEGER},
       topicId = #{record.topicid,jdbcType=INTEGER},
       gropLeaderScore = #{record.gropleaderscore,jdbcType=INTEGER},
-      attendanceScore = #{record.attendancescore,jdbcType=REAL},
-      replyScore = #{record.replyscore,jdbcType=REAL},
+      attendanceScore = #{record.attendancescore,jdbcType=INTEGER},
+      replyScore = #{record.replyscore,jdbcType=INTEGER},
       suggestion = #{record.suggestion,jdbcType=VARCHAR},
       blockTime = #{record.blocktime,jdbcType=INTEGER},
       finalScore = #{record.finalscore,jdbcType=REAL}
@@ -314,10 +314,10 @@
         gropLeaderScore = #{gropleaderscore,jdbcType=INTEGER},
       </if>
       <if test="attendancescore != null" >
-        attendanceScore = #{attendancescore,jdbcType=REAL},
+        attendanceScore = #{attendancescore,jdbcType=INTEGER},
       </if>
       <if test="replyscore != null" >
-        replyScore = #{replyscore,jdbcType=REAL},
+        replyScore = #{replyscore,jdbcType=INTEGER},
       </if>
       <if test="suggestion != null" >
         suggestion = #{suggestion,jdbcType=VARCHAR},
@@ -341,8 +341,8 @@
       teaId = #{teaid,jdbcType=INTEGER},
       topicId = #{topicid,jdbcType=INTEGER},
       gropLeaderScore = #{gropleaderscore,jdbcType=INTEGER},
-      attendanceScore = #{attendancescore,jdbcType=REAL},
-      replyScore = #{replyscore,jdbcType=REAL},
+      attendanceScore = #{attendancescore,jdbcType=INTEGER},
+      replyScore = #{replyscore,jdbcType=INTEGER},
       suggestion = #{suggestion,jdbcType=VARCHAR},
       blockTime = #{blocktime,jdbcType=INTEGER},
       finalScore = #{finalscore,jdbcType=REAL}

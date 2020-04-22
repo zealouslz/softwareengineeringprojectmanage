@@ -54,4 +54,10 @@ public class StagetopicServiceImpl implements StagetopicService {
         int i = stagetopicMapper.deleteByPrimaryKey(id);
         return i;
     }
+
+    @Override
+    public List<Stagetopic> selectAll() {
+        List<Stagetopic> stagetopics = stagetopicMapper.selectAll();
+        return stagetopics;
+    }
 }

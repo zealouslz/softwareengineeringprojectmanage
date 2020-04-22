@@ -11,4 +11,5 @@ public interface StagetopicService {
     Stagetopic selectByPrimaryKey(Integer id);
     int updateByPrimaryKey(Stagetopic stagetopic);
     int deleteByPrimaryKey(Integer id);
+    List<Stagetopic> selectAll();
 }
