@@ -139,10 +139,8 @@ public class TeacherController {
         }
     }
 
-    @RequestMapping("/getTopicDetail/{id}")
-    public String getTopicDetail(@PathVariable("id") Integer topicId,
-                                 @RequestParam("IsSuccess") String IsSuccess,
-                                 Model model){
+    @RequestMapping("/getTopicDetail")
+    public String getTopicDetail( Integer topicId, String IsSuccess, Model model){
         Topic topic = topicService.selectByPrimaryKey(topicId);
         model.addAttribute("topic",topic);
         Teacher teacher = teacherService.selectByPrimayKey(topic.getTeaid());
@@ -211,14 +209,14 @@ public class TeacherController {
         File tempFile =  tempFile =  new File(path);
         if(tempFile.exists()){
             String IsSuccess="文件已存在，请重新选择！";
-            return "redirect:/getTopicDetail/"+id+"?IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
+            return "redirect:/getTopicDetail?topicId="+id+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
         }else {
             try {
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
             } catch (Exception e) {
                 e.printStackTrace();
                 String IsSuccess = "文件上传失败";
-                return "redirect:/getTopicDetail/" + id + "?IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
+                return "redirect:/getTopicDetail?topicId=" + id + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
             }
             int i = topicService.updateByPrimaryKey(topic);
             String isUpdateSuccess = "成功更新" + i + "条选题";
@@ -527,9 +525,9 @@ public class TeacherController {
         }
     }
 
-    @RequestMapping("/getStageTopicDetail/{id}")
-    public String getStageTopicDetail(@PathVariable("id") Integer id,Model model){
-        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(id);
+    @RequestMapping("/getStageTopicDetail")
+    public String getStageTopicDetail( Integer stagetopicId,Model model){
+        Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicId);
         Teacher teacher = teacherService.selectByPrimayKey(stagetopic.getTeaid());
         model.addAttribute("stagetopic",stagetopic);
         model.addAttribute("teacher",teacher);
@@ -624,12 +622,15 @@ public class TeacherController {
     }
 
     @RequestMapping("/auditStageTopic")
-    public String auditStageTopic(Integer currentUser,Integer page,Model model){
+    public String auditStageTopic(Integer currentUser,Integer page,Model model) throws UnsupportedEncodingException {
         Page p=new Page();
         p.setCurrentPage(page);
         p.setPageSize(5);
 
         List<Stagetopic> stagetopics = stagetopicService.selectByTeaId(currentUser);
+        if (stagetopics.size()==0){
+            return "redirect:/manageStageTask?currentUser="+currentUser+"&isUpdateSuccess=" + URLEncoder.encode("你还没有发布阶段性任务","UTF-8")+"&page=1";
+        }
         List<Integer> stagetopicIds=new ArrayList<>();
         for (Stagetopic stagetopic:stagetopics){
             stagetopicIds.add(stagetopic.getId());
@@ -684,6 +685,11 @@ public class TeacherController {
         p.setPageSize(5);
         p.setTotalUsers(topicService.selectByTeacherId(currentUser).size());
         List<Topic> topics = topicService.selectByTeaIdAddPage(currentUser,(page - 1) * p.getPageSize(), p.getPageSize());
+        for (Topic topic:topics){
+            if(topic.getResult()==null){
+                topic.setResult("");
+            }
+        }
         model.addAttribute("topics",topics);
         model.addAttribute("page",p);
         model.addAttribute("isUpdateSuccess",isUpdateSuccess);
@@ -992,7 +998,7 @@ public class TeacherController {
         Student student = studentService.selectByPrimaryKey(score.getId());
         Topic topic = topicService.selectByPrimaryKey(score.getTopicid());
         model.addAttribute("topic",topic);
-        model.addAttribute("currentUser",teaId);
+        model.addAttribute("teaId",teaId);
         model.addAttribute("classId",classId);
         model.addAttribute("stuId",stuId);
         model.addAttribute("type",type);
@@ -1129,6 +1135,51 @@ public class TeacherController {
             response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    @RequestMapping("/teaChangePassWordHtml")
+    public String teaChangePassWordHtml(Integer currentUser,Model model){
+        Teacher teacher = teacherService.selectByPrimayKey(currentUser);
+        model.addAttribute("teacher",teacher);
+        return "teacher/teaChangePassword";
+    }
+
+    @RequestMapping("/teaChangePassword")
+    @ResponseBody
+    public String teaChangePassword(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int teaId = Integer.parseInt(request.getParameter("teaId"));
+        String oldPassword = request.getParameter("oldPassword");
+        String newPassword = request.getParameter("newPassword");
+        String rePassword = request.getParameter("rePassword");
+        Teacher teacher = teacherService.selectByPrimayKey(id);
+        JSONObject object = new JSONObject();
+        if (teacher.getPassword().equals(oldPassword)){
+            if (newPassword.equals(rePassword)){
+                int i = teacherService.updatePassword(id, newPassword);
+                if(i>0){
+                    object.put("code",1);
+                    String msg="密码修改成功！请重新登录";
+                    object.put("msg",msg);
+                    return object.toString();
+                }else {
+                    object.put("code",-1);
+                    String msg="修改失败，请重新尝试！";
+                    object.put("msg",msg);
+                    return object.toString();
+                }
+            }else {
+                object.put("code",-1);
+                String msg="两次输入密码不一致，请重新输入！";
+                object.put("msg",msg);
+                return object.toString();
+            }
+        }else {
+            object.put("code",-1);
+            String msg="原密码输入不正确，请重新输入！";
+            object.put("msg",msg);
+            return object.toString();
         }
     }
 }

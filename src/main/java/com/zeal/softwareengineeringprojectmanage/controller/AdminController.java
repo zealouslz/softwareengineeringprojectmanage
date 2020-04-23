@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,6 +39,8 @@ public class AdminController {
     @Autowired
     private ImportService importService;
     @Autowired
+    ScoreService scoreService;
+    @Autowired
     TopicService topicService;
     @Value("${file.uploadOutstandingCaseFolder}")
     private String outstandingCasePath;
@@ -49,7 +52,14 @@ public class AdminController {
 
     @RequestMapping("/addSingleStudent")
     public String importStudent(Student student, HttpSession session, RedirectAttributes redirectAttributes){
-            try {
+        List<Student> students = studentService.selectAll();
+        for(Student stu:students){
+            if(stu.getStuid().intValue()==student.getStuid().intValue()){
+                redirectAttributes.addFlashAttribute("addIsSuccess","此学号已存在，请重新添加");
+                return "redirect:/studentImport";
+            }
+        }
+        try {
                 studentService.saveStudent(student);
                 redirectAttributes.addFlashAttribute("addIsSuccess","学生添加成功");
                 return "redirect:/studentImport";
@@ -60,6 +70,13 @@ public class AdminController {
     }
     @RequestMapping("/addSingleTeacher")
     public String importTeacher(Teacher teacher, HttpSession session, RedirectAttributes redirectAttributes){
+        List<Teacher> teachers = teacherService.selectAll();
+        for(Teacher tea:teachers){
+            if(tea.getTeaid().intValue()==teacher.getTeaid().intValue()||tea.getTeaname().equals(teacher.getTeaname())){
+                redirectAttributes.addFlashAttribute("addIsSuccess","该教师已存在！");
+                return "redirect:/teacherImport";
+            }
+        }
         try {
             teacherService.insert(teacher);
             redirectAttributes.addFlashAttribute("addIsSuccess","教师添加成功");
@@ -112,7 +129,13 @@ public class AdminController {
             student.setPassword(String.valueOf(lo.get(3)));
             student.setClassid((int)(Double.parseDouble(String.valueOf(lo.get(4)))));
             student.setTeaid((int)(Double.parseDouble(String.valueOf(lo.get(5)))));
-             insert += studentService.saveStudent(student);
+            try {
+                insert += studentService.saveStudent(student);
+            }
+             catch (Exception e){
+                 redirectAttributes.addFlashAttribute("IsSuccess", "插入失败，请检查表格格式或者班级id和教师id是否存在");
+                 return "redirect:/studentImport";
+             }
             //调用mapper中的insert方法
         }
         redirectAttributes.addFlashAttribute("IsSuccess", "成功插入"+insert+"条数据");
@@ -152,20 +175,61 @@ public class AdminController {
         return "redirect:/teacherImport";
     }
     @RequestMapping("/manageStu")
-    public String manageStu(Model model){
+    public String manageStu(Integer type,Integer page,String classId,String stuId,String isUpdateSuccess, Model model){
         List<Clazz> clazzes = clazzService.selectAll();
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(8);
+        List<Student> students = null;
+        List<Score> scores = scoreService.selectAll();
+        List<Teacher> teachers = teacherService.selectAll();
+        List<Topic> topics = topicService.selectAll();
+        if(type==1){
+            List<Student> studentAll = studentService.selectByClazzId(Integer.parseInt(classId));
+            p.setTotalUsers(studentAll.size());
+            isUpdateSuccess="成功查询到"+studentAll.size()+"个学生";
+            students=studentService.selectByClazzIdLimit(Integer.parseInt(classId),(page - 1) * p.getPageSize(), p.getPageSize());
+        }else if (type==2){
+            Student studentAll = studentService.selectByStuId(Integer.parseInt(stuId));
+            if (studentAll==null){
+                isUpdateSuccess="该学生不存在，请重新输入";
+                p.setTotalUsers(0);
+            }else {
+                isUpdateSuccess="成功查询到一个学生";
+                p.setTotalUsers(1);
+                List<Student> studentAll1=new ArrayList<>();
+                studentAll1.add(studentAll);
+                students=studentAll1;
+            }
+        }else if(type==0){
+            List<Student> studentAll = studentService.selectAll();
+            p.setTotalUsers(studentAll.size());
+            students = studentService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+        }
+        model.addAttribute("page",p);
+        model.addAttribute("students",students);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        model.addAttribute("classId",classId);
+        model.addAttribute("type",type);
+        model.addAttribute("stuId",stuId);
         model.addAttribute("clazzes",clazzes);
+        model.addAttribute("scores",scores);
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("topics",topics);
         return "admin/manageStu";
     }
 
     @RequestMapping("/getStuDetail")
-    public String updateStu(Integer stuId,Model model){
-        Student student = studentService.selectByStuId(stuId);
+    public String updateStu(Integer id,Integer type,String classId,String stuId,Model model){
+        Student student = studentService.selectByStuId(id);
         model.addAttribute("student",student);
         List<Clazz> clazzes = clazzService.selectAll();
         model.addAttribute("clazzes",clazzes);
         List<Teacher> teachers = teacherService.selectAll();
         model.addAttribute("teachers",teachers);
+        model.addAttribute("type",type);
+        model.addAttribute("classId",classId);
+        model.addAttribute("stuId",stuId);
         return "admin/updateStu";
     }
     @RequestMapping("/getTeaDetail")
@@ -175,7 +239,7 @@ public class AdminController {
         return "admin/updateTea";
     }
     @RequestMapping("/updateStuByStuId")
-    public String updateStuByStuId(Student student,Model model) throws UnsupportedEncodingException {
+    public String updateStuByStuId(Student student,Integer type,String classId,String stuId,Model model) throws UnsupportedEncodingException {
         Integer stuid = student.getStuid();
         String stuname = student.getStuname();
         String password = student.getPassword();
@@ -186,7 +250,7 @@ public class AdminController {
         Integer topicid = student.getTopicid();
         int i = studentService.updateByStuId(stuid,stuname,password,classid,teaid,isgroupleader,groupid,topicid);
         String isUpdateSuccess="成功修改了"+i+"条数据";
-        return "redirect:/studentByPage?classid="+classid+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+        return "redirect:/manageStu?classId="+classId+"&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1&type="+type+"&stuId="+stuId;
     }
     @RequestMapping("/updateTeaById")
     @ResponseBody
@@ -255,24 +319,6 @@ public class AdminController {
         }
     }
 
-    @RequestMapping(value = "/studentByPage")
-    public String findStuByPage(String classid,int page,String isUpdateSuccess, Model model) {
-            List<Clazz> clazzes = clazzService.selectAll();
-            model.addAttribute("clazzes",clazzes);
-            List<Teacher> teachers = teacherService.selectAll();
-            model.addAttribute("teachers",teachers);
-            Page p=new Page();
-            p.setTotalUsers(studentService.selectByClazzId(Integer.parseInt(classid)).size());
-            p.setCurrentPage(page);
-            List<Student> list = studentService.selectByClazzIdLimit(Integer.parseInt(classid),(page - 1) * p.getPageSize(), p.getPageSize());
-//            查询结果是list集合
-            model.addAttribute("list", list);
-            model.addAttribute("page", p);
-            model.addAttribute("clazzid",classid);
-            model.addAttribute("isUpdateSuccess",isUpdateSuccess);
-            return "admin/manageStu";
-    }
-
     @RequestMapping("/manageTea")
     public String findTeaByPage(int page,String isUpdateSuccess,Model model){
         Page p=new Page();
@@ -298,14 +344,21 @@ public class AdminController {
     }
 
     @RequestMapping("/addClass")
-    public String addClass(Model model,HttpSession session){
-        List<Teacher> teachers = teacherService.selectAll();
-        model.addAttribute("teachers",teachers);
+    public String addClass(Model model,String SingleSuccess,HttpSession session){
+        model.addAttribute("SingleSuccess",SingleSuccess);
         return "admin/addClass";
     }
 
     @RequestMapping("/addSingleClass")
     public String addSingleClass(Clazz clazz) throws UnsupportedEncodingException {
+        List<Clazz> clazzes = clazzService.selectAll();
+        for (Clazz clz:clazzes){
+            if(clz.getClassname().equals(clazz.getClassname())){
+                int insert = clazzService.insert(clazz);
+                String isUpdateSuccess="该班级已存在！";
+                return "redirect:/addClass?SingleSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
+            }
+        }
         int insert = clazzService.insert(clazz);
         String isUpdateSuccess="成功添加"+insert+"条数据";
         return "redirect:/manageClass?isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8")+"&page=1";
@@ -728,4 +781,70 @@ public class AdminController {
             return object.toString();
         }
     }
+    @RequestMapping("/adminManageScore")
+    public String adminManageScore(String teaId,Integer page,String classId, String stuId,String isUpdateSuccess,Integer type,Model model){
+        List<Clazz> clazzes = clazzService.selectAll();
+        Page p=new Page();
+        p.setCurrentPage(page);
+        p.setPageSize(8);
+        List<Student> students = null;
+        List<Score> scores = scoreService.selectAll();
+        List<Teacher> teachers = teacherService.selectAll();
+        List<Topic> topics = topicService.selectAll();
+        if(type==0) {
+            List<Student> studentAll = studentService.selectByTeaId(Integer.parseInt(teaId));
+            p.setTotalUsers(studentAll.size());
+            isUpdateSuccess="成功查询到"+studentAll.size()+"个学生";
+            students = studentService.selectByTeaIdAndPage(Integer.parseInt(teaId), (page - 1) * p.getPageSize(), p.getPageSize());
+        }else if(type==1){
+            List<Student> studentAll = studentService.selectByClazzId(Integer.parseInt(classId));
+            p.setTotalUsers(studentAll.size());
+            isUpdateSuccess="成功查询到"+studentAll.size()+"个学生";
+            students=studentService.selectByClazzIdLimit(Integer.parseInt(classId),(page - 1) * p.getPageSize(), p.getPageSize());
+        }else if (type==3){
+            Student studentAll = studentService.selectByStuId(Integer.parseInt(stuId));
+            if (studentAll==null){
+                isUpdateSuccess="该学生不存在，请重新输入";
+                p.setTotalUsers(0);
+            }else {
+                isUpdateSuccess="成功查询到一个学生";
+                p.setTotalUsers(1);
+                List<Student> studentAll1=new ArrayList<>();
+                studentAll1.add(studentAll);
+                students=studentAll1;
+            }
+        }else if(type==4){
+            List<Student> studentAll = studentService.selectAll();
+            p.setTotalUsers(studentAll.size());
+            students = studentService.selectAllAndPage((page - 1) * p.getPageSize(), p.getPageSize());
+        }
+        model.addAttribute("page",p);
+        model.addAttribute("students",students);
+        model.addAttribute("isUpdateSuccess",isUpdateSuccess);
+        model.addAttribute("teaId",teaId);
+        model.addAttribute("classId",classId);
+        model.addAttribute("type",type);
+        model.addAttribute("stuId",stuId);
+        model.addAttribute("clazzes",clazzes);
+        model.addAttribute("scores",scores);
+        model.addAttribute("teachers",teachers);
+        model.addAttribute("topics",topics);
+        return "admin/adminManageScore";
+    }
+
+    @RequestMapping("/adminUpdateScoreHtml")
+    public String adminUpdateScore(Integer id,String teaId,String classId, String stuId,Integer type,Model model ){
+        Score score = scoreService.selectByPrimaryKey(id);
+        Student student = studentService.selectByPrimaryKey(score.getId());
+        Topic topic = topicService.selectByPrimaryKey(score.getTopicid());
+        model.addAttribute("topic",topic);
+        model.addAttribute("teaId",teaId);
+        model.addAttribute("classId",classId);
+        model.addAttribute("stuId",stuId);
+        model.addAttribute("type",type);
+        model.addAttribute("score",score);
+        model.addAttribute("student",student);
+        return "admin/adminUpdateScore";
+    }
+
 }

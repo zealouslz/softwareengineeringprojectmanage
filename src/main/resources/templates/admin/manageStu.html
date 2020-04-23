@@ -51,18 +51,31 @@
 				<div th:replace="commons/bar::#adminsidebar(activeUri='manageStu')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
 					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/studentByPage(page=1,isUpdateSuccess=null)}" class="form-horizontal" method="post">
-
-						<div class="row form-group">
-							<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="classid"><strong>请选择班级:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<select class="form-control" name="classid" id="classid" >
-								<option th:selected="${clazz!=null}?${clazz.id==clazzid}" th:value="${clazz.id}" th:each="clazz:${clazzes}" th:text="${clazz.classname}">1</option>
-							</select>
+					<div>
+						<form th:action="@{/manageStu}" class="form-horizontal" method="post">
+							<div class="row form-group">
+								<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="classId"><strong>按班级查询:</strong></label>
+								<div class="col-lg-5 col-md-6">
+									<input type="hidden" name="type" th:value="1">
+									<input type="hidden" name="page" th:value="1">
+									<select class="form-control" name="classId">
+										<option th:selected="${clazze.id}==${classId}" th:value="${clazze.id}" th:each="clazze:${clazzes}" th:text="${clazze.classname}">1</option>
+									</select>
+								</div>
+								<button type="submit" class="btn btn-primary" >查询</button>
 							</div>
-							<button type="submit" class="btn btn-primary" >查询</button>
-						</div>
-					</form>
+						</form>
+						<form th:action="@{/manageStu}" class="form-horizontal" method="post">
+							<div class="row form-group">
+								<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="classId"><strong>按学号查询:</strong></label>
+								<div class="col-lg-5 col-md-6">
+									<input name="stuId" class="form-control" type="text" placeholder="请输入你需要查询的学号"  th:value="${stuId}">
+									<input type="hidden" name="type" th:value="2">
+									<input type="hidden" name="page" th:value="1">
+								</div>
+								<button type="submit" class="btn btn-primary" >查询</button>
+							</div>
+						</form>
 					<p style="color: red" th:text="${isUpdateSuccess}" th:if="${not #strings.isEmpty(isUpdateSuccess)}"></p>
 					<div class="table-responsive">
 						<table class="table table-striped table-sm">
@@ -80,7 +93,7 @@
 							</tr>
 							</thead>
 							<tbody>
-							<tr th:each="student:${list}">
+							<tr th:each="student:${students}">
 								<td th:text="${student.stuid}"></td>
 								<td th:text="${student.stuname}"></td>
 								<td th:text="${student.password}"></td>
@@ -90,7 +103,7 @@
 								<td th:text="${student.groupid}"></td>
 								<td th:text="${student.topicid}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getStuDetail}+'?stuId='+${student.stuid}">编辑</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getStuDetail}+'?id='+${student.stuid}+'&type='+${type}+'&classId='+${classId}+'&stuId='+${stuId}">编辑</a>
 									<a class="btn btn-sm btn-danger deleteBtn" th:onclick="dele('[[${student.stuid}]]')">删除</a>
 								</td>
 							</tr>
@@ -98,32 +111,42 @@
 						</table>
 						<table style="margin: auto" th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/studentByPage}">
+								<form  th:action="@{/manageStu}">
 									<td><input type="hidden" name="page" th:value="1"></td>
-									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="hidden" name="classId" id="classId" th:value="${classId}"></td>
+									<td><input type="hidden" name="type"  id="type" th:value="${type}"></td>
+									<td><input type="hidden" name="stuId" id="stuId" th:value="${stuId}"></td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/studentByPage}">
+								<form  th:action="@{/manageStu}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
-									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="hidden" name="classId" th:value="${classId}"></td>
+									<td><input type="hidden" name="type" th:value="${type}"></td>
+									<td><input type="hidden" name="stuId" th:value="${stuId}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/studentByPage}">
+								<form  th:action="@{/manageStu}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
-									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="hidden" name="classId" th:value="${classId}"></td>
+									<td><input type="hidden" name="type" th:value="${type}"></td>
+									<td><input type="hidden" name="stuId" th:value="${stuId}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/studentByPage}">
+								<form  th:action="@{/manageStu}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
-									<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
+									<td><input type="hidden" name="classId" th:value="${classId}"></td>
+									<td><input type="hidden" name="type" th:value="${type}"></td>
+									<td><input type="hidden" name="stuId" th:value="${stuId}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/studentByPage}">
-											<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
-											<td><input type="hidden" name="classid" th:value="${clazzid}"></td>
-											<td><input type="submit" value="确定"></td>
+								<form  th:action="@{/manageStu}">
+									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
+									<td><input type="hidden" name="classId" th:value="${classId}"></td>
+									<td><input type="hidden" name="type" th:value="${type}"></td>
+									<td><input type="hidden" name="stuId" th:value="${stuId}"></td>
+									<td><input type="submit" value="确定"></td>
 								</form>
 							</tr>
 						</table>
@@ -145,8 +168,9 @@
 		<script>
 			feather.replace()
 			function dele(id) {
-				var classid = $("#classid").val();
-
+				var type = $("#type").val();
+				var classId = $("#classId").val();
+				var stuId = $("#stuId").val();
 				if (confirm('确定删除学号为' + id + '的学生吗？')) {
 					$.ajax({
 						url: '/deleteStu',
@@ -163,7 +187,7 @@
 							//将json对象转换为字符串
 							if (code == 1) {
 								alert(msg);
-								window.location.href = "/studentByPage?classid="+classid+"&page=1";
+								window.location.href = "/manageStu?classId="+classId+"&page=1&stuId="+stuId+"&type="+type;
 							} else {
 								alert(msg);
 							}

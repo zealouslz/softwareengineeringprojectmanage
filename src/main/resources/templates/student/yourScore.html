@@ -7,7 +7,7 @@
 		<meta name="description" content="">
 		<meta name="author" content="">
 
-		<title>添加班级</title>
+		<title>你的分数</title>
 		<!-- Bootstrap core CSS -->
 		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
 
@@ -48,42 +48,61 @@
 		<div class="container-fluid">
 			<div class="row">
 				<!--引入sidebar-->
-				<div th:replace="commons/bar::#adminsidebar"></div>
+				<div th:replace="commons/bar::#studentsidebar(activeUri='yourScore')"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h5>单独添加</h5>
-					<!--需要区分是员工修改还是添加；-->
-					<form th:action="@{/addSingleClass}" class="form-horizontal" method="post">
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="classname"><strong>班级:</strong></label>
-							<div class="col-lg-5 col-md-6">
-							<input name="classname" id="classname" type="text" class="form-control" placeholder="软嵌**" >
-							</div>
-						</div>
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="charge"><strong>班主任:</strong></label>
-							<div class="col-lg-5 col-md-6">
-								<input name="charge" id="charge" type="text" class="form-control" placeholder="李**" >
-							</div>
-						</div>
-						<p style="color: red" th:text="${SingleSuccess}" th:if="${not #strings.isEmpty(SingleSuccess)}"></p>
-						<button type="submit" class="btn btn-primary" >添加</button>
-						<button type="reset"  class="btn btn-primary">重置</button>
-					</form>
-					<br><br>
-					<h5>批量导入</h5>
-					<form method="post" enctype="multipart/form-data" id="form" action="/classUpload">
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="filename"><strong>上传文件:</strong></label>
-							<div class="col-lg-5 col-md-6">
-								<input type="file" id="filename" name="filename"/>
-							</div>
-						</div>
-						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
-						<button type="submit" class="btn btn-primary" >添加</button>
-					</form>
+					<div class="table-responsive">
+						<table class="table table-striped table-sm">
+							<tr>
+								<td>id</td>
+								<td th:text="${score.id}"></td>
+							</tr>
+							<tr>
+								<td>学号</td>
+								<td th:text="${score.stuid}"></td>
+							</tr>
+							<tr>
+								<td>姓名</td>
+								<td th:text="${student.stuname}"></td>
+							</tr>
+							<tr>
+								<td>选题</td>
+								<td th:text="${topic.topicname}"></td>
+							</tr>
+							<tr>
+								<td>指导教师</td>
+								<td th:text="${teacher.teaname}"></td>
+							</tr>
+							<tr>
+								<td>组长评分</td>
+								<td th:text="${score.gropleaderscore}/${score.blocktime}" th:if="${score.gropleaderscore!=0} and ${score.blocktime!=0}"></td>
+								<td th:text="暂未评分" th:if="${score.gropleaderscore==0}"></td>
+							</tr>
+							<tr>
+								<td>完成任务次数</td>
+								<td th:text="${score.blocktime}"></td>
+							</tr>
+							<tr>
+								<td>报告得分</td>
+								<td th:text="${score.attendancescore}" th:if="${score.attendancescore!=0}"></td>
+								<td th:text="暂未评分" th:if="${score.attendancescore==0}"></td>
+							</tr>
+							<tr>
+								<td>答辩得分</td>
+								<td th:text="${score.replyscore}" th:if="${score.replyscore!=0}"></td>
+								<td th:text="暂未评分" th:if="${score.replyscore==0}"></td>
+							</tr>
 
-					<p style="color: red">注：导入的文件必须是.xls或者.xlsx格式；<br>
-						&nbsp;&nbsp;列依次是“序号，班级名，班主任姓名”</p>
+							<tr>
+								<td>最终得分</td>
+								<td th:text="${score.finalscore}" ></td>
+							</tr>
+
+							<tr>
+								<td>评语</td>
+								<td th:text="${score.suggestion}"></td>
+							</tr>
+						</table>
+					</div>
 				</main>
 			</div>
 		</div>
@@ -99,6 +118,12 @@
 		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
 		<script>
 			feather.replace()
+			function foo(msg){
+				if(confirm(msg)){
+					return true;
+				}
+				return false;
+			}
 		</script>
 
 		<!-- Graphs -->

@@ -78,7 +78,7 @@
 								<td th:text="${#dates.format(stagetopic.deadline,'yyyy-MM-dd HH:mm:ss')}" ></td>
 								<td><a th:href="@{${stagetopic.downloadlink}}" th:text="${stagetopic.downloadlink}" download="" ></a></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getStageTopicDetail/}+${stagetopic.id}">编辑</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getStageTopicDetail}+'?stagetopicId='+${stagetopic.id}">编辑</a>
 									<button class="btn-sm btn-danger deleteBtn" id="delete" name="delete" th:onclick="dele('[[${stagetopic.id}]]')">删除</button>
 								</td>
 							</tr>

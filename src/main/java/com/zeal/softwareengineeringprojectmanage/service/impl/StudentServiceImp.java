@@ -71,6 +71,12 @@ public class StudentServiceImp implements StudentService {
     }
 
     @Override
+    public List<Student> selectAllAndPage(Integer start,Integer pageSize) {
+        List<Student> students = studentMapper.selectAllAndPage(start, pageSize);
+        return students;
+    }
+
+    @Override
     public List<ChoosedTopic> haveChoosedTopic() {
         List<ChoosedTopic> havechoosedtopic = studentMapper.haveChoosedTopic();
         return havechoosedtopic;
@@ -162,5 +168,11 @@ public class StudentServiceImp implements StudentService {
         criteria.andIsgroupleaderEqualTo(integer.byteValue());
         List<Student> students = studentMapper.selectByExample(studentExample);
         return students.get(0);
+    }
+
+    @Override
+    public int updatePassword(Integer id, String password) {
+        int i = studentMapper.updatePassword(id, password);
+        return i;
     }
 }

@@ -19,6 +19,7 @@ public interface StudentService {
     int updateByStuId(Integer stuId,String stuName,String password,Integer classId,Integer teaId,Integer isGroupLeader,Integer groupId,Integer topicId);
     int deleteStuByStuId(Integer stuId);
     List<Student> selectAll();
+    List<Student> selectAllAndPage(Integer start,Integer pageSize);
     List<ChoosedTopic> haveChoosedTopic();
     int updateTopicIdByStuId(Integer topicId,Integer stuId);
     List<Student> selectByTeaId(Integer teaId);
@@ -31,4 +32,5 @@ public interface StudentService {
     List<Student> selectByStuIdAndTeaId(Integer stuId,Integer teaId);
     int updateGroupAndTopicByStuId(Integer stuId,Integer isgroupLeader,Integer groupId,Integer topicId);
     Student selectGroupLeader(Integer groupId);
+    int updatePassword(Integer id,String password);
 }

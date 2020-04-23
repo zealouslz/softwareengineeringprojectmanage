@@ -44,6 +44,8 @@ public class StudentController {
     @Autowired
     OutstandingcaseService outstandingcaseService;
     @Autowired
+    ScoreService scoreService;
+    @Autowired
     BlocktaskService blocktaskService;
     @Value("${file.uploadStageTopicResultFolder}")
     private String stageTopicResultPath;
@@ -488,7 +490,8 @@ public class StudentController {
                 Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
                 blocktask.setDeadline(date2);
                 blocktask.setReleasetime(date3);
-                int i = blocktaskService.updateByPrimaryKey(blocktask);
+                blocktaskService.deleteByPrimary(blockTaskId);
+                int i = blocktaskService.insert(blocktask);
                 String isUpdateSuccess = "成功更新" + i + "条任务";
                 return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }
@@ -530,7 +533,8 @@ public class StudentController {
                     String isSuccess="文件上传失败！";
                     return "redirect:/getBlockTaskDetail?Id="+blockTaskId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
                 }
-                int i = blocktaskService.updateByPrimaryKey(blocktask);
+                blocktaskService.deleteByPrimary(blockTaskId);
+                int i = blocktaskService.insert(blocktask);
                 String isUpdateSuccess = "成功更新" + i + "条任务";
                 return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }
@@ -1002,5 +1006,63 @@ public class StudentController {
             model.addAttribute("outstandingcase",outstandingcase);
             return "student/stuCaseDetail";
         }
+
+        @RequestMapping("/yourScore")
+        public String yourScore(Integer stuId,Model model){
+            Score score = scoreService.selectByPrimaryKey(stuId);
+            Student student = studentService.selectByPrimaryKey(stuId);
+            Teacher teacher = teacherService.selectByPrimayKey(score.getTeaid());
+            Topic topic = topicService.selectByPrimaryKey(score.getTopicid());
+            model.addAttribute("score",score);
+            model.addAttribute("teacher",teacher);
+            model.addAttribute("topic",topic);
+            model.addAttribute("student",student);
+            return "student/yourScore";
+        }
+
+        @RequestMapping("/stuChangePassWordHtml")
+        public String stuChangePassWordHtml(Integer stuId,Model model){
+            Student student = studentService.selectByPrimaryKey(stuId);
+            model.addAttribute("student",student);
+            return "student/stuChangePassword";
+        }
+
+    @RequestMapping("/stuChangePassword")
+    @ResponseBody
+    public String stuChangePassword(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        int id = Integer.parseInt(request.getParameter("id"));
+        int stuId = Integer.parseInt(request.getParameter("stuId"));
+        String oldPassword = request.getParameter("oldPassword");
+        String newPassword = request.getParameter("newPassword");
+        String rePassword = request.getParameter("rePassword");
+        Student student = studentService.selectByPrimaryKey(id);
+        JSONObject object = new JSONObject();
+        if (student.getPassword().equals(oldPassword)){
+            if (newPassword.equals(rePassword)){
+                int i = studentService.updatePassword(id, newPassword);
+                if(i>0){
+                    object.put("code",1);
+                    String msg="密码修改成功！请重新登录";
+                    object.put("msg",msg);
+                    return object.toString();
+                }else {
+                    object.put("code",-1);
+                    String msg="修改失败，请重新尝试！";
+                    object.put("msg",msg);
+                    return object.toString();
+                }
+            }else {
+                object.put("code",-1);
+                String msg="两次输入密码不一致，请重新输入！";
+                object.put("msg",msg);
+                return object.toString();
+            }
+        }else {
+            object.put("code",-1);
+            String msg="原密码输入不正确，请重新输入！";
+            object.put("msg",msg);
+            return object.toString();
+        }
+    }
 }
 

@@ -55,4 +55,10 @@ public class TeacherServiceImpl implements TeacherService {
         List<Teacher> teachers = teacherMapper.selectByPage(start, perPageSize);
         return teachers;
     }
+
+    @Override
+    public int updatePassword(Integer id,String password) {
+        int i = teacherMapper.updatePassword(id, password);
+        return i;
+    }
 }
