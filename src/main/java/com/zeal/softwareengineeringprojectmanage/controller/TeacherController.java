@@ -276,8 +276,8 @@ public class TeacherController {
         return "teacher/viewChooseDetail";
     }
 
-    @RequestMapping("/confirmGroup/{id}")
-    public String confirmGroup(@PathVariable("id") Integer topicId,Model model){
+    @RequestMapping("/confirmGroup")
+    public String confirmGroup(Integer topicId,Model model){
         List<Student> students = studentService.selectByTopicId(topicId);
         model.addAttribute("students",students);
         Topic topic = topicService.selectByPrimaryKey(topicId);
@@ -401,8 +401,8 @@ public class TeacherController {
         return "teacher/manageGroupAndTopic";
     }
 
-    @RequestMapping("/getStuGroupAndTopicDetail/{stuid}")
-    public String updateStu(@PathVariable("stuid") Integer stuid,Model model){
+    @RequestMapping("/getStuGroupAndTopicDetail")
+    public String updateStu(Integer stuid,Model model){
         Student student = studentService.selectByStuId(stuid);
         model.addAttribute("student",student);
         List<Clazz> clazzes = clazzService.selectAll();
@@ -536,13 +536,13 @@ public class TeacherController {
 
     @RequestMapping("/updateStageTopicById")
     public String updateStageTopicById(@RequestParam("id")Integer id,
-                                  @RequestParam("name")String name,
-                                  @RequestParam("describe") String describe,
-                                  @RequestParam("teaid") Integer teaid,
-                                  @RequestParam("deadline")String deadline,
-                                  @RequestParam("releaseTime")String releaseTime,
-                                  @RequestParam("downloadlink") String downloadlink,
-                                  @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
+                                      @RequestParam("name")String name,
+                                      @RequestParam("describe") String describe,
+                                      @RequestParam("teaid") Integer teaid,
+                                      @RequestParam("deadline")String deadline,
+                                      @RequestParam("releaseTime")String releaseTime,
+                                      @RequestParam("downloadlink") String downloadlink,
+                                      @RequestParam("file") MultipartFile file, HttpServletRequest req, Model model) throws ParseException, UnsupportedEncodingException {
         if(file.isEmpty()){
             Stagetopic stagetopic = new Stagetopic();
             stagetopic.setId(id);
@@ -1036,6 +1036,18 @@ public class TeacherController {
             }
         }
     }
+    @RequestMapping("/onlyGetScoreDetail")
+    public String onlyGetScoreDetail(Integer id,Model model){
+        Score score = scoreService.selectByPrimaryKey(id);
+        Student student = studentService.selectByPrimaryKey(id);
+        Topic topic = topicService.selectByPrimaryKey(score.getTopicid());
+        Teacher teacher = teacherService.selectByPrimayKey(student.getTeaid());
+        model.addAttribute("score",score);
+        model.addAttribute("student",student);
+        model.addAttribute("topic",topic);
+        model.addAttribute("teacher",teacher);
+        return "teacher/scoreDetail";
+    }
     @RequestMapping("/blockDetail")
     public String blockDetail(Integer stuId,Model model){
         List<Blocktask> blocktasks = blocktaskService.selectByStuId(stuId);
@@ -1181,5 +1193,7 @@ public class TeacherController {
             object.put("msg",msg);
             return object.toString();
         }
+
+
     }
 }

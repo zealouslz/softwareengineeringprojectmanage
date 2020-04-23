@@ -98,7 +98,7 @@
 								<td th:text="${student.groupid}"></td>
 								<td th:text="${student.topicid}"></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/getStuGroupAndTopicDetail/}+${student.stuid}">修改</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/getStuGroupAndTopicDetail}+'?stuid='+${student.stuid}">修改</a>
 								</td>
 							</tr>
 							</tbody>

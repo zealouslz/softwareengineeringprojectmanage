@@ -41,6 +41,10 @@ public class AdminController {
     @Autowired
     ScoreService scoreService;
     @Autowired
+    BlocktaskService blocktaskService;
+    @Autowired
+    StagetopicService stagetopicService;
+    @Autowired
     TopicService topicService;
     @Value("${file.uploadOutstandingCaseFolder}")
     private String outstandingCasePath;
@@ -846,5 +850,16 @@ public class AdminController {
         model.addAttribute("student",student);
         return "admin/adminUpdateScore";
     }
-
+    @RequestMapping("/adminBlockDetail")
+    public String blockDetail(Integer stuId,Model model){
+        List<Blocktask> blocktasks = blocktaskService.selectByStuId(stuId);
+        Student student = studentService.selectByPrimaryKey(stuId);
+        Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
+        List<Stagetopic> stagetopics = stagetopicService.selectAll();
+        model.addAttribute("blocktasks",blocktasks);
+        model.addAttribute("student",student);
+        model.addAttribute("topic",topic);
+        model.addAttribute("stagetopics",stagetopics);
+        return "admin/adminBlockDetail";
+    }
 }

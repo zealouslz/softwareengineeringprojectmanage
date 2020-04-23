@@ -71,7 +71,7 @@
 								<td th:text="${choosedTopic.count}+'/'+${topic.maxsize}" th:each="choosedTopic:${choosedTopics}" th:if="${choosedTopic.topicId}==${topic.id}"></td>
 								<td><label th:text="${student.stuname+'&nbsp&nbsp'}"  th:each="student:${students}" th:if="${student.topicid}==${topic.id}" ></label></td>
 								<td>
-									<a class="btn btn-sm btn-primary" th:href="@{/confirmGroup/}+${topic.id}">确定分组</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/confirmGroup}+'?topicId='+${topic.id}">确定分组</a>
                                     <button  class="btn btn-sm btn-danger deleteBtn" th:onclick="stopTopic('[[${topic.id}]]')">停开</button>
 								</td>
 							</tr>

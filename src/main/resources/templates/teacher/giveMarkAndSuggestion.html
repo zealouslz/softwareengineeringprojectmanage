@@ -76,14 +76,15 @@
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>选题名：</strong></label>
                             <div class="col-lg-5 col-md-6">
 							<input id="topicname" name="topicname" type="text" class="form-control"  th:value="${topic.topicname}" th:readonly="true">
-								<input id="currentUser" name="currentUser" type="hidden" class="form-control"  th:value="${currentUser}" >
+								<input  name="topicname" type="text" class="form-control"  th:value="暂未选题" th:readonly="true" th:if="${topic==null}">
+								<input id="currentUser" name="currentUser" type="hidden" class="form-control"  th:value="${teaId}" >
 								<input id="classId" name="classId" type="hidden" class="form-control"  th:value="${classId}" >
 								<input id="stuIdfrombefore" name="currentUser" type="hidden" class="form-control"  th:value="${stuId}" >
 								<input id="type" name="currentUser" type="hidden" class="form-control"  th:value="${type}" >
                             </div>
                         </div>
 						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>组长评分：</strong></label>
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="groupLeaderScore"><strong>组长评分：</strong></label>
 							<div class="col-lg-5 col-md-6">
 								<input id="groupLeaderScore" name="groupLeaderScore" type="text" class="form-control"  th:value="${score.gropleaderscore}/${score.blocktime}" th:if="${score.gropleaderscore}!=0" th:readonly="true">
 								<input name="groupLeaderScore" type="text" class="form-control"  th:value="暂未评分" th:if="${score.gropleaderscore}==0" th:readonly="true">

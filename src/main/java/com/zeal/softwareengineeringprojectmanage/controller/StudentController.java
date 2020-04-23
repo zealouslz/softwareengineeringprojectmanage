@@ -56,7 +56,7 @@ public class StudentController {
     @Value("${file.uploadTopicResultFolder}")
     private String topicResultPath;
     @RequestMapping("/choosetopic")
-    public String chooseTopic(Integer stuId, Integer page,Model model){
+    public String chooseTopic(Integer stuId, Integer page,String noTopicId,Model model){
         Page p=new Page();
         p.setCurrentPage(page);
         p.setPageSize(5);
@@ -85,16 +85,17 @@ public class StudentController {
         Teacher teacher = teacherService.selectByPrimayKey(student.getTeaid());
         model.addAttribute("topics",topics);
         model.addAttribute("choosedTopics",choosedTopics);
+        model.addAttribute("noTopicId",noTopicId);
         model.addAttribute("teacher",teacher);
         model.addAttribute("page",p);
         return "student/chooseTopic";
     }
 
     @RequestMapping("/yourtopic")
-    public String yourTopic(Integer stuId,String isChooseSuccess, Model model){
+    public String yourTopic(Integer stuId,String isChooseSuccess, Model model) throws UnsupportedEncodingException {
         Student stu = studentService.selectByPrimaryKey(stuId);
         if(stu.getTopicid()==null){
-            return "redirect:/choosetopic?stuId="+stu.getId()+"&page=1";
+            return "redirect:/choosetopic?stuId="+stu.getId()+"&page=1&noTopicId="+URLEncoder.encode("你还没有选题，请先选题！","UTF-8");
         }
         Topic topic = topicService.selectByPrimaryKey(stu.getTopicid());
         if(topic.getResult()==null){
@@ -129,6 +130,9 @@ public class StudentController {
         List<Integer> stagetopicsIds =new ArrayList<>();
         for(Stagetopic stagetopic:stagetopics1){
             stagetopicsIds.add(stagetopic.getId());
+        }
+        if(student.getTopicid()==null){
+           return  "redirect:/yourtopic?stuId="+stuId;
         }
         List<Stagetopicresult> stagetopicresults = stagetopicresultService.selectByTopicId(student.getTopicid());
         List<Integer> resultstagetopicsIds=new ArrayList<>();
@@ -405,6 +409,7 @@ public class StudentController {
                 blocktask.setStuid(stuId);
                 blocktask.setStagetopicid(stageTopic);
                 blocktask.setTopicid(topicId);
+                blocktask.setScore(0);
                 String[] str1 = deadline.split("[T]");
                 String[] str2 = releaseTime.split("[T]");
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -559,7 +564,7 @@ public class StudentController {
         }
 
         @RequestMapping("/yourBlockTask")
-        public String yourBlockTask(Integer stuId,Integer page,String isUpdateSuccess, Model model){
+        public String yourBlockTask(Integer stuId,Integer page,String isUpdateSuccess, Model model) throws UnsupportedEncodingException {
             Page p=new Page();
             p.setCurrentPage(page);
             p.setPageSize(5);
@@ -571,6 +576,9 @@ public class StudentController {
                 }
             }
             Student student = studentService.selectByPrimaryKey(stuId);
+            if(student.getGroupid()==null){
+                return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode("暂未分组，请等待老师分组","UTF-8");
+            }
             Student groupLeader = studentService.selectGroupLeader(student.getGroupid());
             Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
             List<Stagetopic> stagetopics = stagetopicService.selectByTeaId(student.getTeaid());

@@ -16,7 +16,7 @@
     <result column="isPass" property="ispass" jdbcType="INTEGER" />
     <result column="suggestion" property="suggestion" jdbcType="VARCHAR" />
     <result column="stuId" property="stuid" jdbcType="INTEGER" />
-    <result column="score" property="score" jdbcType="VARCHAR" />
+    <result column="score" property="score" jdbcType="INTEGER" />
     <result column="stagetopicid" property="stagetopicid" jdbcType="INTEGER" />
     <result column="topicid" property="topicid" jdbcType="INTEGER" />
     <result column="submittime" property="submittime" jdbcType="TIMESTAMP" />
@@ -156,7 +156,7 @@
     values (#{id,jdbcType=INTEGER}, #{blockname,jdbcType=VARCHAR}, #{blockdescribe,jdbcType=VARCHAR}, 
       #{groupleaderid,jdbcType=INTEGER}, #{releasetime,jdbcType=TIMESTAMP}, #{deadline,jdbcType=TIMESTAMP}, 
       #{downloadlink,jdbcType=VARCHAR}, #{ispass,jdbcType=INTEGER}, #{suggestion,jdbcType=VARCHAR}, 
-      #{stuid,jdbcType=INTEGER}, #{score,jdbcType=VARCHAR}, #{stagetopicid,jdbcType=INTEGER}, 
+      #{stuid,jdbcType=INTEGER}, #{score,jdbcType=INTEGER}, #{stagetopicid,jdbcType=INTEGER}, 
       #{topicid,jdbcType=INTEGER}, #{submittime,jdbcType=TIMESTAMP}, #{uploadfile,jdbcType=VARCHAR}
       )
   </insert>
@@ -245,7 +245,7 @@
         #{stuid,jdbcType=INTEGER},
       </if>
       <if test="score != null" >
-        #{score,jdbcType=VARCHAR},
+        #{score,jdbcType=INTEGER},
       </if>
       <if test="stagetopicid != null" >
         #{stagetopicid,jdbcType=INTEGER},
@@ -309,7 +309,7 @@
         stuId = #{record.stuid,jdbcType=INTEGER},
       </if>
       <if test="record.score != null" >
-        score = #{record.score,jdbcType=VARCHAR},
+        score = #{record.score,jdbcType=INTEGER},
       </if>
       <if test="record.stagetopicid != null" >
         stagetopicid = #{record.stagetopicid,jdbcType=INTEGER},
@@ -344,7 +344,7 @@
       isPass = #{record.ispass,jdbcType=INTEGER},
       suggestion = #{record.suggestion,jdbcType=VARCHAR},
       stuId = #{record.stuid,jdbcType=INTEGER},
-      score = #{record.score,jdbcType=VARCHAR},
+      score = #{record.score,jdbcType=INTEGER},
       stagetopicid = #{record.stagetopicid,jdbcType=INTEGER},
       topicid = #{record.topicid,jdbcType=INTEGER},
       submittime = #{record.submittime,jdbcType=TIMESTAMP},
@@ -388,7 +388,7 @@
         stuId = #{stuid,jdbcType=INTEGER},
       </if>
       <if test="score != null" >
-        score = #{score,jdbcType=VARCHAR},
+        score = #{score,jdbcType=INTEGER},
       </if>
       <if test="stagetopicid != null" >
         stagetopicid = #{stagetopicid,jdbcType=INTEGER},
@@ -420,7 +420,7 @@
       isPass = #{ispass,jdbcType=INTEGER},
       suggestion = #{suggestion,jdbcType=VARCHAR},
       stuId = #{stuid,jdbcType=INTEGER},
-      score = #{score,jdbcType=VARCHAR},
+      score = #{score,jdbcType=INTEGER},
       stagetopicid = #{stagetopicid,jdbcType=INTEGER},
       topicid = #{topicid,jdbcType=INTEGER},
       submittime = #{submittime,jdbcType=TIMESTAMP},

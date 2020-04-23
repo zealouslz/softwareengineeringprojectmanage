@@ -90,7 +90,8 @@
 						<div class="row form-group">
 							<label class="control-label col-lg-1" for="teaid"><strong>指导教师：</strong></label>
                             <div class="col-lg-5 col-md-6">
-							<input name="teaid" id="teaid" type="text" class="form-control" th:text="${teacher.teaname}" th:value="${teacher.id}" th:readonly="true">
+							<input name="teaid" id="teaid" type="hidden" class="form-control" th:value="${teacher.id}" >
+								<input name="teaname" id="teaname" type="text" class="form-control" th:value="${teacher.teaname}"  th:readonly="true">
 						    </div>
                         </div>
 						<div class="row form-group">

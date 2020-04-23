@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>分数详情</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.4.1/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+		<style type="text/css">
+			/* Chart.js */
+			
+			@-webkit-keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			@keyframes chartjs-render-animation {
+				from {
+					opacity: 0.99
+				}
+				to {
+					opacity: 1
+				}
+			}
+			
+			.chartjs-render-monitor {
+				-webkit-animation: chartjs-render-animation 0.001s;
+				animation: chartjs-render-animation 0.001s;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#teachersidebar"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<!--需要区分是员工修改还是添加；-->
+
+						<div class="row form-group ">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="id"><strong>id:</strong></label>
+                            <div class="col-lg-5 col-md-6">
+							<input id="id" name="id" type="text" class="form-control" placeholder="12" th:value="${score.id}" th:readonly="true">
+                            </div>
+                        </div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="stuid"><strong>学号：</strong></label>
+                            <div class="col-lg-5 col-md-6">
+							<input id="stuid" name="stuid" type="text" class="form-control"  th:value="${score.stuid}" th:readonly="true">
+                            </div>
+                        </div>
+						<div class="row form-group">
+							<label class="control-label col-lg-1" for="stuname"><strong>姓名：</strong></label>
+                            <div class="col-lg-5 col-md-6">
+                                <input id="stuname" name="stuname" type="text" class="form-control" rows="6" th:value="${student.stuname}" th:readonly="true">
+                            </div>
+                        </div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" for="topicname"><strong>选题名：</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<input id="topicname" name="topicname" type="text" class="form-control"  th:value="${topic.topicname}" th:if="${topic}!=null" th:readonly="true">
+							<input id="topicname" name="topicname" type="text" class="form-control"  th:value="暂未选题" th:if="${topic}==null" th:readonly="true">
+						</div>
+					</div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="teaname"><strong>指导教师：</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<input id="teaname" name="teaname" type="text" class="form-control"  th:value="${teacher.teaname}" th:readonly="true">
+						</div>
+					</div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="groupLeaderScore"><strong>组长评分：</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<input id="groupLeaderScore" name="groupLeaderScore" type="text" class="form-control"  th:value="${score.gropleaderscore}/${score.blocktime}" th:if="${score.gropleaderscore}!=0" th:readonly="true">
+							<input name="groupLeaderScore" type="text" class="form-control"  th:value="暂未评分" th:if="${score.gropleaderscore}==0" th:readonly="true">
+						</div>
+					</div>
+
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>完成的任务：</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<a th:href="@{/blockDetail}+'?stuId='+${score.id}" th:text="'总共完成了'+${score.blocktime}+'次组长分配的任务，点击查看详情'"  ></a>
+						</div>
+					</div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="topicname"><strong>报告得分：</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<input id="attendancescore" name="attendancescore" type="text" class="form-control"  th:value="${score.attendancescore}" th:if="${score.attendancescore}!=0" th:readonly="true">
+							<input name="attendancescore" type="text" class="form-control"  th:value="暂未评分" th:if="${score.attendancescore}==0" th:readonly="true">
+						</div>
+					</div>
+
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="score"><strong>答辩评分：</strong></label>
+						<div class="col-lg-5 col-md-6" >
+							<input id="score" name="score" type="number" class="form-control"  th:value="${score.replyscore}" th:if="${score.replyscore}!=0" th:readonly="true" >
+							<input  name="score" type="text" class="form-control"  th:value="暂未评分" th:if="${score.replyscore}==0" th:readonly="true" >
+						</div>
+					</div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="suggestion"><strong>评语:</strong></label>
+						<div class="col-lg-5 col-md-6">
+							<textarea name="suggestion"  id="suggestion" rows="6" class="form-control" th:text="${score.suggestion}" th:readonly="true"></textarea>
+						</div>
+					</div>
+						<a  class="btn btn-primary" onClick="javascript:history.back(-1);">返回</a>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.16.0/dist/popper.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.4.1/js/bootstrap.js}"></script>
+
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+		<script>
+			feather.replace()
+		</script>
+	</body>
+
+</html>

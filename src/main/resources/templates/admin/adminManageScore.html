@@ -115,6 +115,7 @@
 								<td th:text="${student.stuname}"></td>
 								<td th:text="${teacher.teaname}" th:each="teacher:${teachers}" th:if="${teacher.id}==${student.teaid}"></td>
 								<td th:text="${topic.topicname}" th:each="topic:${topics}" th:if="${topic.id}==${student.topicid}"></td>
+                                <td th:text="还未选题"  th:if="${student.topicid}==null"></td>
 								<td th:text="${score.gropleaderscore}/${score.blocktime}" th:each="score:${scores}" th:if="${score.id}==${student.id} and ${score.gropleaderscore}!=0"></td>
 								<td th:text="暂未评分" th:each="score:${scores}" th:if="${score.id}==${student.id} and ${score.gropleaderscore}==0"></td>
 								<td th:text="${score.blocktime}" th:each="score:${scores}" th:if="${score.id}==${student.id}"></td>
