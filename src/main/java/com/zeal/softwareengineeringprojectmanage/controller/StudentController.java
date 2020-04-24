@@ -1,11 +1,12 @@
 package com.zeal.softwareengineeringprojectmanage.controller;
 
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import com.zeal.softwareengineeringprojectmanage.bean.*;
 import com.zeal.softwareengineeringprojectmanage.service.*;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -14,20 +15,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.jws.WebParam;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.plaf.PanelUI;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.MalformedInputException;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 public class StudentController {
@@ -55,8 +54,12 @@ public class StudentController {
     private String blockTaskResultPath;
     @Value("${file.uploadTopicResultFolder}")
     private String topicResultPath;
+
+    Logger logger = LoggerFactory.getLogger(getClass());
+
     @RequestMapping("/choosetopic")
     public String chooseTopic(Integer stuId, Integer page,String noTopicId,Model model){
+        logger.info("学生进入选题界面");
         Page p=new Page();
         p.setCurrentPage(page);
         p.setPageSize(5);
@@ -93,8 +96,10 @@ public class StudentController {
 
     @RequestMapping("/yourtopic")
     public String yourTopic(Integer stuId,String isChooseSuccess, Model model) throws UnsupportedEncodingException {
+        logger.info("学生进入已选的选题信息界面");
         Student stu = studentService.selectByPrimaryKey(stuId);
         if(stu.getTopicid()==null){
+            logger.info("还未选题，跳转到选题信息界面");
             return "redirect:/choosetopic?stuId="+stu.getId()+"&page=1&noTopicId="+URLEncoder.encode("你还没有选题，请先选题！","UTF-8");
         }
         Topic topic = topicService.selectByPrimaryKey(stu.getTopicid());
@@ -114,11 +119,13 @@ public class StudentController {
         int i = studentService.updateTopicIdByStuId(topicId, stuId);
         Topic topic = topicService.selectByPrimaryKey(topicId);
         String isChooseSuccess="成功选择"+topic.getTopicname()+"!题号："+topicId;
+        logger.info(isChooseSuccess);
         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess,"UTF-8");
     }
 
     @RequestMapping("/stageTopic")
     public String stageTopic(Integer stuId,Integer page,String isUpdateSuccess,Model model){
+        logger.info("学生进入阶段性任务界面");
         Page p = new Page();
         p.setCurrentPage(page);
         p.setPageSize(5);
@@ -132,6 +139,7 @@ public class StudentController {
             stagetopicsIds.add(stagetopic.getId());
         }
         if(student.getTopicid()==null){
+            logger.info("学生还未选题，跳转到选题界面");
            return  "redirect:/yourtopic?stuId="+stuId;
         }
         List<Stagetopicresult> stagetopicresults = stagetopicresultService.selectByTopicId(student.getTopicid());
@@ -170,7 +178,7 @@ public class StudentController {
 
     @RequestMapping("uploadStageFile")
     public String uploadStageFile(Integer topicid, Integer stagetopicid,Integer stuId, MultipartFile file,Model model) throws UnsupportedEncodingException {
-
+        logger.info("学生上传阶段性任务结果");
         if(!file.isEmpty()){
             Stagetopicresult stagetopicresult=new Stagetopicresult();
             stagetopicresult.setStagetopicid(stagetopicid);
@@ -186,6 +194,7 @@ public class StudentController {
             File tempFile = tempFile =  new File(path);
             if(tempFile.exists()){
                 model.addAttribute("IsSuccess","文件已存在，请重新上传!");
+                logger.info("上传失败，阶段性任务结果已存在");
                 Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicid);
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
@@ -199,6 +208,7 @@ public class StudentController {
             }catch (Exception e){
                 e.printStackTrace();
                 model.addAttribute("IsSuccess","文件上传异常!");
+                logger.info("阶段性结果文件上传异常");
                 Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicid);
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
@@ -209,10 +219,11 @@ public class StudentController {
             int insert = stagetopicresultService.insert(stagetopicresult);
             if(insert>0){
                 String isUpdateSuccess="成功提交";
-                System.out.println(stuId);
+                logger.info("学生成功提交阶段性任务结果");
                 return "redirect:/stageTopic?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }else {
                 model.addAttribute("IsSuccess","提交失败，请重新尝试!");
+                logger.info("阶段性任务结果提交失败");
                 Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicid);
                 Topic topic = topicService.selectByPrimaryKey(topicid);
                 model.addAttribute("stagetopic",stagetopic);
@@ -223,6 +234,7 @@ public class StudentController {
             }
         }else {
             model.addAttribute("IsSuccess","文件不能为空!");
+            logger.info("阶段性结果文件为空，上传失败");
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicid);
             Topic topic = topicService.selectByPrimaryKey(topicid);
             model.addAttribute("stagetopic",stagetopic);
@@ -234,6 +246,7 @@ public class StudentController {
 
     @RequestMapping("/changeStageResultFile")
     public String changeStageResultFile(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+        logger.info("学生进入修改阶段性任务结果界面");
         Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
         Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
         Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
@@ -247,8 +260,10 @@ public class StudentController {
 
     @RequestMapping("/changeStageFile")
     public String changeStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+        logger.info("学生重新提交阶段性结果文件");
         if(file.isEmpty()){
             String isSuccess="文件为空，请重新选择！";
+            logger.info("阶段性结果文件为空，上传失败");
             return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
         }else {
             Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
@@ -267,6 +282,7 @@ public class StudentController {
             File tempFile =  tempFile =  new File(path);
             if(tempFile.exists()){
                 String isSuccess="文件已存在，请重新选择！";
+                logger.info("阶段性结果文件已存在，上传失败");
                 return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
             }else {
                 try {
@@ -274,14 +290,17 @@ public class StudentController {
                 } catch (Exception e) {
                     e.printStackTrace();
                     String isSuccess = "文件上传失败";
+                    logger.info("阶段性结果文件上传失败");
                     return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
                 }
                 int i = stagetopicresultService.updateByPrimaryKey(stagetopicresult);
                 if(i>0) {
                     String isUpdateSuccess="成功重新提交";
+                    logger.info("成功重新提交阶段性结果文件");
                     return "redirect:/stageTopic?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                 }else {
                     String isSuccess = "重新提交失败，请重新尝试！";
+                    logger.info("阶段性结果文件提交失败");
                     return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
                 }
             }
@@ -290,6 +309,7 @@ public class StudentController {
 
     @RequestMapping("/reUploadStage")
     public String reUploadStage(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+        logger.info("组长进入重新提交阶段性任务界面");
         Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
         Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
         Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
@@ -303,8 +323,10 @@ public class StudentController {
 
     @RequestMapping("/reUploadStageFile")
     public String reUploadStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+        logger.info("组长重新提交阶段性任务文件");
         if (file.isEmpty()) {
             String isSuccess = "文件为空，请重新选择！";
+            logger.info("阶段性任务文件为空");
             return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
         } else {
             Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
@@ -325,6 +347,7 @@ public class StudentController {
             File tempFile = tempFile = new File(path);
             if (tempFile.exists()) {
                 String isSuccess = "文件已存在，请重新选择！";
+                logger.info("阶段性任务文件已存在");
                 return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
             } else {
                 try {
@@ -332,14 +355,17 @@ public class StudentController {
                 } catch (Exception e) {
                     e.printStackTrace();
                     String isSuccess = "文件上传失败";
+                    logger.info(isSuccess);
                     return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                 }
                 int i = stagetopicresultService.updateByPrimaryKey(stagetopicresult);
                 if (i > 0) {
                     String isUpdateSuccess = "成功重新提交";
+                    logger.info("成功重新提交阶段性任务");
                     return "redirect:/stageTopic?stuId=" + stuId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                 } else {
                     String isSuccess = "重新提交失败，请重新尝试！";
+                    logger.info("重新提交阶段性任务失败");
                     return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                 }
             }
@@ -348,6 +374,7 @@ public class StudentController {
 
         @RequestMapping("/getStageCheckDetail")
         public String getStageCheckDetail(Integer stagetopicresultId,Integer stuId,String isSuccess,Model model){
+            logger.info("进入阶段性任务审核详情界面");
             Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultId);
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(stagetopicresult.getStagetopicid());
             Topic topic = topicService.selectByPrimaryKey(stagetopicresult.getTopicid());
@@ -359,6 +386,7 @@ public class StudentController {
 
         @RequestMapping("/blockStageTopicHtml")
         public String blockStageTopicHtml(Integer stuId,Integer page,String isUpdateSuccess,Model model){
+            logger.info("进入分块任务管理界面");
             Page p=new Page();
             p.setCurrentPage(page);
             p.setPageSize(5);
@@ -380,6 +408,7 @@ public class StudentController {
 
         @RequestMapping("/addBlockTopicHtml")
         public String addBlockTopicHtml(Integer stuId,String isSuccess,Model model){
+            logger.info("进入添加任务分块界面");
             Student groupLeader = studentService.selectByPrimaryKey(stuId);
             List<Student> students = studentService.selectByGroupId(groupLeader.getGroupid());
             Topic topic = topicService.selectByPrimaryKey(groupLeader.getTopicid());
@@ -401,7 +430,8 @@ public class StudentController {
                                     String releaseTime,
                                     String deadline,
                                     MultipartFile file,Model model) throws UnsupportedEncodingException, ParseException {
-            if(!file.isEmpty()){
+            logger.info("添加阶段性任务");
+        if(!file.isEmpty()){
                 Blocktask blocktask=new Blocktask();
                 blocktask.setBlockname(blockTopicName);
                 blocktask.setBlockdescribe(blocktopicdescribe);
@@ -426,6 +456,7 @@ public class StudentController {
                 File tempFile = tempFile =  new File(path);
                 if(tempFile.exists()){
                     String isSuccess="文件已存在，请重新选择文件";
+                    logger.info("阶段性任务参考文件已存在");
                     return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                 }else {
                     try {
@@ -433,25 +464,30 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String isSuccess="文件上传失败，请重新尝试";
+                        logger.info("阶段性任务参考文件上传失败");
                         return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                     }
                     int insert = blocktaskService.insert(blocktask);
                     if(insert>0) {
                         String isUpdateSuccess = "成功分配" + insert + "任务";
+                        logger.info("成功分配" + insert + "条分块任务");
                         return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                     }else {
                         String isSuccess="文件上传失败，请重新尝试";
+                        logger.info("阶段性任务参考文件上传失败");
                         return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                     }
                 }
             }else {
                 String isSuccess="文件为空，上传失败";
+                logger.info("阶段性任务参考文件为空，上传失败");
                 return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
             }
         }
 
         @RequestMapping("/getBlockTaskDetail")
         public String getBlockTaskDetail(Integer Id,String isSuccess,Model model){
+            logger.info("进入分块任务详情界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(Id);
             Student groupLeader = studentService.selectByPrimaryKey(blocktask.getGroupleaderid());
             List<Student> students = studentService.selectByGroupId(groupLeader.getGroupid());
@@ -478,7 +514,8 @@ public class StudentController {
                                       String deadline,
                                       String downloadlink,
                                       MultipartFile file) throws ParseException, UnsupportedEncodingException {
-            if(file.isEmpty()){
+            logger.info("更新分块任务信息");
+        if(file.isEmpty()){
                 Blocktask blocktask=new Blocktask();
                 blocktask.setId(blockTaskId);
                 blocktask.setStagetopicid(stageTopic);
@@ -498,6 +535,7 @@ public class StudentController {
                 blocktaskService.deleteByPrimary(blockTaskId);
                 int i = blocktaskService.insert(blocktask);
                 String isUpdateSuccess = "成功更新" + i + "条任务";
+                logger.info("成功更新"+i+"条分块任务");
                 return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }
             File deleteFile = new File(downloadlink);
@@ -529,6 +567,7 @@ public class StudentController {
             File tempFile =  tempFile =  new File(path);
             if(tempFile.exists()){
                 String isSuccess="文件已存在，请重新选择！";
+                logger.info("分块任务参考文件已存在，上传失败");
                 return "redirect:/getBlockTaskDetail?Id="+blockTaskId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
             }else {
                 try {
@@ -536,11 +575,13 @@ public class StudentController {
                 } catch (Exception e) {
                     e.printStackTrace();
                     String isSuccess="文件上传失败！";
+                    logger.info("分块任务参考文件上传失败");
                     return "redirect:/getBlockTaskDetail?Id="+blockTaskId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
                 }
                 blocktaskService.deleteByPrimary(blockTaskId);
                 int i = blocktaskService.insert(blocktask);
                 String isUpdateSuccess = "成功更新" + i + "条任务";
+                logger.info("成功更新"+i+"条分块任务");
                 return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }
         }
@@ -548,23 +589,27 @@ public class StudentController {
         @RequestMapping("/deleteBlockTask")
         @ResponseBody
         public String deleteBlockTask(HttpServletRequest request, HttpServletResponse response) throws JSONException {
+            logger.info("删除分块任务");
             int id = Integer.parseInt(request.getParameter("id"));
             int i = blocktaskService.deleteByPrimary(id);
             JSONObject object = new JSONObject();
             if(i>0) {
                 object.put("code",1);
-                String msg="成功删除了"+i+"条选题";
+                String msg="成功删除了"+i+"条分块任务";
+                logger.info(msg);
                 object.put("msg",msg);
                 return object.toString();
             }else {
                 object.put("code",-1);
                 object.put("msg","删除失败，请重新尝试！！");
+                logger.info("分块任务删除失败");
                 return object.toString();
             }
         }
 
         @RequestMapping("/yourBlockTask")
         public String yourBlockTask(Integer stuId,Integer page,String isUpdateSuccess, Model model) throws UnsupportedEncodingException {
+            logger.info("学生进入自己的分块任务界面");
             Page p=new Page();
             p.setCurrentPage(page);
             p.setPageSize(5);
@@ -577,7 +622,9 @@ public class StudentController {
             }
             Student student = studentService.selectByPrimaryKey(stuId);
             if(student.getGroupid()==null){
+                logger.info("暂未分组，等待老师分组");
                 return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode("暂未分组，请等待老师分组","UTF-8");
+
             }
             Student groupLeader = studentService.selectGroupLeader(student.getGroupid());
             Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
@@ -594,6 +641,7 @@ public class StudentController {
 
         @RequestMapping("/uploadBlockTaskFile")
         public String uploadBlockTaskFile(Integer id,Integer stuId,String IsSuccess,Model model){
+            logger.info("进入提交分块任务结果文件界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(id);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(blocktask.getStagetopicid());
@@ -607,8 +655,8 @@ public class StudentController {
 
         @RequestMapping("/uploadBlockTask")
         public String uploadBlockTask(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
+            logger.info("提交分块任务结果文件");
             if(!file.isEmpty()){
-
                 File dir = new File(blockTaskResultPath);
                 if(!dir.exists()) {
                     dir.mkdir();
@@ -617,6 +665,7 @@ public class StudentController {
                 File tempFile = tempFile =  new File(path);
                 if(tempFile.exists()){
                    String IsSuccess="文件已存在，请重新上传!";
+                    logger.info("分块任务结果文件已存在");
                    return  "redirect:/uploadBlockTaskFile?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                 }
                 else {
@@ -625,25 +674,30 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String IsSuccess="文件上传失败，请重新尝试!";
+                        logger.info("分块结果文件上传失败");
                         return  "redirect:/uploadBlockTaskFile?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
                     int i = blocktaskService.updateUploadFile(blockId,path,new Date());
                     if(i>0){
                         String isUpdateSuccess="成功提交";
+                        logger.info("成功上传分块任务结果");
                         return "redirect:/yourBlockTask?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                     }else {
                         String IsSuccess="提交失败请重新尝试";
+                        logger.info("分块任务结果提交失败");
                         return  "redirect:/uploadBlockTaskFile?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
                 }
             }else {
                 String IsSuccess="文件不能为空";
+                logger.info("分块任务结果文件为空");
                 return  "redirect:/uploadBlockTaskFile?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
             }
         }
 
         @RequestMapping("/changeBlockTaskFileHtml")
         public String changeBlockTaskFileHtml(Integer id,Integer stuId,String IsSuccess,Model model){
+            logger.info("进入重新提交分块任务结果界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(id);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(blocktask.getStagetopicid());
@@ -657,8 +711,10 @@ public class StudentController {
 
         @RequestMapping("/changeBlockTaskFile")
         public String changeBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
-            if(file.isEmpty()){
+            logger.info("重新提交分块任务结果");
+        if(file.isEmpty()){
                 String IsSuccess="文件为空，请重新选择！";
+            logger.info("分块任务结果文件为空");
                 return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
             }else {
                 Blocktask blocktask = blocktaskService.selectByPrimaryKey(blockId);
@@ -674,6 +730,7 @@ public class StudentController {
                 File tempFile =  tempFile =  new File(path);
                 if(tempFile.exists()){
                     String IsSuccess="文件已存在，请重新选择！";
+                    logger.info("分块任务结果文件已存在");
                     return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                 }else {
                     try {
@@ -681,14 +738,17 @@ public class StudentController {
                     } catch (Exception e) {
                         e.printStackTrace();
                         String IsSuccess="文件上传失败，请重新尝试！";
+                        logger.info("分块任务结果文件重新提交失败");
                         return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
                     int i = blocktaskService.updateUploadFile(blockId, path, new Date());
                     if(i>0) {
                         String isUpdateSuccess="成功重新提交";
+                        logger.info("分块任务结果文件成功重新提交");
                         return "redirect:/yourBlockTask?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                     }else {
                         String IsSuccess = "重新提交失败，请重新尝试！";
+                        logger.info("分块任务结果文件成功重新提交失败");
                         return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
                 }
@@ -697,6 +757,7 @@ public class StudentController {
 
         @RequestMapping("/reUploadBlockTaskFileHtml")
         public String reUploadBlockTaskFileHtml(Integer id,Integer stuId,String IsSuccess,Model model){
+            logger.info("进入重新提交分块任务结果界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(id);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(blocktask.getStagetopicid());
@@ -709,8 +770,10 @@ public class StudentController {
         }
         @RequestMapping("/reUploadBlockTaskFile")
         public String reUploadBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
-            if (file.isEmpty()) {
+            logger.info("重新提交分块任务结果文件");
+           if (file.isEmpty()) {
                 String IsSuccess = "文件为空，请重新选择！";
+               logger.info("分块任务结果文件为空，重新提交失败");
                 return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
             } else {
                 Blocktask blocktask = blocktaskService.selectByPrimaryKey(blockId);
@@ -726,6 +789,7 @@ public class StudentController {
                 File tempFile = tempFile = new File(path);
                 if (tempFile.exists()) {
                     String IsSuccess = "文件已存在，请重新选择！";
+                    logger.info("分块任务结果文件已存在，重新提交失败");
                     return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
                 } else {
                     try {
@@ -733,14 +797,17 @@ public class StudentController {
                     } catch (Exception e) {
                         e.printStackTrace();
                         String IsSuccess = "文件上传失败！";
+                        logger.info("分块任务结果文件重新提交失败");
                         return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
                     }
                     int i = blocktaskService.updateIsPassAndUploadAndSubTime(blockId,2,new Date(),path);
                     if (i > 0) {
                         String isUpdateSuccess="成功提交";
+                        logger.info("分块任务结果文件成功重新提交");
                         return "redirect:/yourBlockTask?stuId="+stuId+"&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                     } else {
                         String IsSuccess = "重新提交失败，请重新尝试！";
+                        logger.info("分块任务结果文件重新提交失败");
                         return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
                     }
                 }
@@ -749,6 +816,7 @@ public class StudentController {
 
         @RequestMapping("/getBlockTaskCheckDetail")
         public String getBlockTaskCheckDetail(Integer id,Model model){
+            logger.info("获取分块任务审核详情");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(id);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(blocktask.getStagetopicid());
@@ -759,6 +827,7 @@ public class StudentController {
         }
         @RequestMapping("/auditBlockTaskHtml")
         public String auditBlockTaskHtml(Integer stuId,Integer page,String isUpdateSuccess,Model model){
+            logger.info("进入审核分块任务界面");
             Page p=new Page();
             p.setCurrentPage(page);
             p.setPageSize(5);
@@ -785,6 +854,7 @@ public class StudentController {
 
         @RequestMapping("/auditBlockTask")
         public String auditBlockTask(Integer blockId,Model model){
+            logger.info("进入审核分块任务详情界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(blockId);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
             Stagetopic stagetopic = stagetopicService.selectByPrimaryKey(blocktask.getStagetopicid());
@@ -799,7 +869,8 @@ public class StudentController {
         @RequestMapping("/checkBlockTask")
         @ResponseBody
         public String checkBlockTask(HttpServletRequest request,HttpServletResponse response) throws JSONException {
-            int blockId = Integer.parseInt(request.getParameter("blockId"));
+            logger.info("审核分块任务");
+           int blockId = Integer.parseInt(request.getParameter("blockId"));
             int ispass = Integer.parseInt(request.getParameter("ispass"));
             int score = Integer.parseInt(request.getParameter("score"));
             String suggestion = request.getParameter("suggestion");
@@ -808,17 +879,20 @@ public class StudentController {
             if(i>0) {
                 object.put("code",1);
                 String msg="成功提交了审核信息";
+                logger.info("成功审核了一条分块任务");
                 object.put("msg",msg);
                 return object.toString();
             }else {
                 object.put("code",-1);
                 object.put("msg","审核失败，请重新尝试！！");
+                logger.info("分块任务审核失败");
                 return object.toString();
             }
         }
 
         @RequestMapping("/uploadResultHtml")
         public String uploadResultHtml(Integer stuId,Model model){
+            logger.info("上传选题结果界面");
             Student student = studentService.selectByPrimaryKey(stuId);
             Topic topic = topicService.selectByPrimaryKey(student.getTopicid());
             Teacher teacher = teacherService.selectByPrimayKey(topic.getTeaid());
@@ -830,8 +904,10 @@ public class StudentController {
 
         @RequestMapping("/uploadResult")
         public String uploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            logger.info("上传选题完成结果");
             if (file.isEmpty()){
                String isChooseSuccess="文件不能为空，请重新选择！";
+                logger.info("选题结果页面为空，上传失败");
                return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 File dir = new File(topicResultPath);
@@ -842,6 +918,7 @@ public class StudentController {
                 File tempFile = tempFile =  new File(path);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
+                    logger.info("选题结果文件已存在，上传失败");
                     return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
                 }
                 else {
@@ -850,14 +927,17 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String isChooseSuccess="文件上传异常!";
+                        logger.info("选题结果文件上传异常");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                     int i = topicService.uploadResult(topicId,path,new Date());
                     if(i>0){
                         String isChooseSuccess="成功提交";
+                        logger.info("成功提交选题结果");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }else {
                         String isChooseSuccess="提交失败，请重新尝试!";
+                        logger.info("选题结果提交失败");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                 }
@@ -866,8 +946,10 @@ public class StudentController {
 
         @RequestMapping("/reUploadResult")
         public String reUploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            logger.info("重新提交选题结果");
             if (file.isEmpty()){
                 String isChooseSuccess="文件不能为空，请重新选择！";
+                logger.info("选题结果文件为空，提交失败");
                 return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 Topic topic = topicService.selectByPrimaryKey(topicId);
@@ -883,6 +965,7 @@ public class StudentController {
                 File tempFile = tempFile =  new File(path);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
+                    logger.info("选题结果文件已存在");
                     return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
                 }
                 else {
@@ -891,14 +974,17 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String isChooseSuccess="文件上传异常!";
+                        logger.info("选题结果文件上传失败");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                     int i = topicService.uploadResultAndIspass(topicId,path,new Date(),2);
                     if(i>0){
                         String isChooseSuccess="成功重新提交";
+                        logger.info("选题结果文件成功重新提交");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }else {
                         String isChooseSuccess="提交失败，请重新尝试!";
+                        logger.info("选题结果文件重新提交失败");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                 }
@@ -907,8 +993,10 @@ public class StudentController {
 
         @RequestMapping("/changeResult")
         public String changeResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+            logger.info("替换选题结果文件");
             if (file.isEmpty()){
                 String isChooseSuccess="文件不能为空，请重新选择！";
+                logger.info("选题结果文件为空");
                 return "redirect:/yourtopic?stuId="+stuId+ "&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 Topic topic = topicService.selectByPrimaryKey(topicId);
@@ -924,6 +1012,7 @@ public class StudentController {
                 File tempFile = tempFile =  new File(path);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
+                    logger.info("选题结果文件已存在，上传失败");
                     return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
                 }
                 else {
@@ -932,14 +1021,17 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String isChooseSuccess="文件上传异常!";
+                        logger.info("选题结果文件上传异常");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                     int i = topicService.uploadResult(topicId,path,new Date());
                     if(i>0){
                         String isChooseSuccess="成功修改！";
+                        logger.info("成功修改选题结果文件");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }else {
                         String isChooseSuccess="提交失败，请重新尝试!";
+                        logger.info("选题结果文件上传失败");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
                 }
@@ -948,7 +1040,9 @@ public class StudentController {
 
         @RequestMapping("/selectCaseLib")
         public String selectCaseLib(Integer teaId,Integer page,Integer Type,String Keyword, String isUpdateSuccess,Model model){
+            logger.info("学生查询优秀案例库");
             if(Type==1){
+                logger.info("学生根据teaid查询优秀案例库");
                 List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByTeaId(teaId);
                 Page p=new Page();
                 p.setTotalUsers(outstandingcasesAll.size());
@@ -960,6 +1054,7 @@ public class StudentController {
                 }
                 List<Outstandingcase> outstandingcases = outstandingcaseService.selectByTeaIdAndPage(teaId, (page - 1) * p.getPageSize(), p.getPageSize());
                 List<Teacher> teachers = teacherService.selectAll();
+                logger.info("成功查询到"+i+"个案例");
                 model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
                 model.addAttribute("page",p);
                 model.addAttribute("teachers",teachers);
@@ -969,6 +1064,7 @@ public class StudentController {
                 model.addAttribute("teaid",teaId);
                 return "student/selectCaseLib";
             }if(Type==2) {
+                logger.info("学生根据关键词查询优秀案例库");
                 List<Outstandingcase> outstandingcasesAll = outstandingcaseService.selectByKeyWord(Keyword);
                 Page p=new Page();
                 p.setTotalUsers(outstandingcasesAll.size());
@@ -981,6 +1077,7 @@ public class StudentController {
                 List<Outstandingcase> outstandingcases = outstandingcaseService.selectByKeyWordAndPage(Keyword, (page - 1) * p.getPageSize(), p.getPageSize());
                 List<Teacher> teachers = teacherService.selectAll();
                 model.addAttribute("isUpdateSuccess","查询到"+i+"个案例");
+                logger.info("成功查询到"+i+"个案例");
                 model.addAttribute("page",p);
                 model.addAttribute("teachers",teachers);
                 model.addAttribute("outstandingcases",outstandingcases);
@@ -989,6 +1086,7 @@ public class StudentController {
                 model.addAttribute("teaid","");
                 return "student/selectCaseLib";
             }else {
+                logger.info("学生查询所有优秀案例库");
                 Page p=new Page();
                 p.setTotalUsers(outstandingcaseService.selectAll().size());
                 p.setPageSize(5);
@@ -1008,6 +1106,7 @@ public class StudentController {
 
         @RequestMapping("/stuGetCaseDetail")
         public String stuGetCaseDetail(Integer id,Model model){
+            logger.info("学生进入优秀案例详情界面");
             Outstandingcase outstandingcase = outstandingcaseService.selectByPrimaryKey(id);
             Teacher teacher = teacherService.selectByPrimayKey(outstandingcase.getTeaid());
             model.addAttribute("teacher",teacher);
@@ -1017,6 +1116,7 @@ public class StudentController {
 
         @RequestMapping("/yourScore")
         public String yourScore(Integer stuId,Model model){
+            logger.info("学生查询成绩");
             Score score = scoreService.selectByPrimaryKey(stuId);
             Student student = studentService.selectByPrimaryKey(stuId);
             Teacher teacher = teacherService.selectByPrimayKey(score.getTeaid());
@@ -1030,6 +1130,7 @@ public class StudentController {
 
         @RequestMapping("/stuChangePassWordHtml")
         public String stuChangePassWordHtml(Integer stuId,Model model){
+            logger.info("学生修改密码界面");
             Student student = studentService.selectByPrimaryKey(stuId);
             model.addAttribute("student",student);
             return "student/stuChangePassword";
@@ -1038,6 +1139,7 @@ public class StudentController {
     @RequestMapping("/stuChangePassword")
     @ResponseBody
     public String stuChangePassword(HttpServletRequest request,HttpServletResponse response) throws JSONException {
+        logger.info("学生修改密码");
         int id = Integer.parseInt(request.getParameter("id"));
         int stuId = Integer.parseInt(request.getParameter("stuId"));
         String oldPassword = request.getParameter("oldPassword");
@@ -1051,23 +1153,26 @@ public class StudentController {
                 if(i>0){
                     object.put("code",1);
                     String msg="密码修改成功！请重新登录";
+                    logger.info("学生修改密码成功");
                     object.put("msg",msg);
                     return object.toString();
                 }else {
                     object.put("code",-1);
                     String msg="修改失败，请重新尝试！";
+                    logger.info("学生修改密码失败");
                     object.put("msg",msg);
                     return object.toString();
                 }
             }else {
                 object.put("code",-1);
                 String msg="两次输入密码不一致，请重新输入！";
+                logger.info("学生输入的两次密码不一致");
                 object.put("msg",msg);
                 return object.toString();
             }
         }else {
             object.put("code",-1);
-            String msg="原密码输入不正确，请重新输入！";
+            String msg="输入的旧密码不正确";
             object.put("msg",msg);
             return object.toString();
         }
