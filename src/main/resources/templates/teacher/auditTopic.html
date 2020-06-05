@@ -73,7 +73,10 @@
                                 <td th:text="${teacher.teaname}" th:each="teacher:${teachers}" th:if="${teacher.id}==${topic.teaid}" th:value="${teacher.id}"></td>
                                 <td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm:ss')}"></td>
                                 <td th:text="${#dates.format(topic.deadline,'yyyy-MM-dd HH:mm:ss')}"></td>
-								<td><a th:href="@{${topic.result}}" th:text="${topic.result}" download="" ></a></td>
+								<td>
+									<a th:href="@{${topic.result}}" th:text="${topic.result.split('/')[5]}" th:if="${topic.result!=''}" download="" ></a>
+									<a th:text="${'暂未提交'}" th:if="${topic.result==''}" download="" ></a>
+								</td>
 								<td th:text="${#dates.format(topic.submittime,'yyyy-MM-dd HH:mm:ss')}"></td>
 								<td>
 									<a  th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==null}">已提交，等待审核</a>
@@ -89,7 +92,7 @@
 									<a class="btn btn-sm btn-primary" th:href="@{/auditTopic}+'?topicId='+${topic.id}" th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==1}">修改</a>
 									<a class="btn btn-sm btn-primary" th:href="@{/auditTopic}+'?topicId='+${topic.id}" th:if="${topic.deadline}<${new java.util.Date()} ">修改</a>
 									<a class="btn btn-sm btn-primary" th:href="@{/auditTopic}+'?topicId='+${topic.id}" th:if="${topic.deadline}>${new java.util.Date()} and ${topic.result.length()>0} and ${topic.ispass==2}">审核</a>
-									<a class="btn btn-sm btn-primary" th:href="@{/putIntoCaseLibHtml}+'?topicId='+${topic.id}" >存入案例库</a>
+									<a class="btn btn-sm btn-primary" th:href="@{/putIntoCaseLibHtml}+'?topicId='+${topic.id}" th:if="${topic.result.length()>0} and ${topic.ispass==1}">存入案例库</a>
 								</td>
 
 							</tr>
@@ -97,7 +100,7 @@
 						</table>
 						<table  th:if="${page!=null}">
 							<tr >
-								<form  th:action="@{/manageTopic(currentUser=${currentUser},isUpdateSuccess=null)}">
+								<form  th:action="@{/auditTopicHtml(currentUser=${currentUser},isUpdateSuccess=null)}">
 									<td><input type="hidden" name="page" th:value="1"></td>
 									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
@@ -105,24 +108,24 @@
 										&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</td>
 									<td><input type="submit" value="首页"></td>
 								</form>
-								<form  th:action="@{/manageTopic(currentUser=${currentUser},isUpdateSuccess=null)}">
+								<form  th:action="@{/auditTopicHtml(currentUser=${currentUser},isUpdateSuccess=null)}">
 									<td><input type="hidden" name="page" th:value="${page.prefPage}"></td>
 									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="上一页"></td>
 								</form>
 								<td>当前：第[[${page.currentPage}]]页<--></td>
 								<td>共：[[${page.totalPages}]]页</td>
-								<form  th:action="@{/manageTopic(currentUser=${currentUser},isUpdateSuccess=null)}">
+								<form  th:action="@{/auditTopicHtml(currentUser=${currentUser},isUpdateSuccess=null)}">
 									<td><input type="hidden" name="page" th:value="${page.nextPage}"></td>
 									<td><input type="hidden" name="currentUser" id="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="下一页"></td>
 								</form>
-								<form  th:action="@{/manageTopic(currentUser=${currentUser},isUpdateSuccess=null)}">
+								<form  th:action="@{/auditTopicHtml(currentUser=${currentUser},isUpdateSuccess=null)}">
 									<td><input type="hidden" name="page" th:value="${page.totalPages}"></td>
 									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="尾页"></td>
 								</form>
-								<form  th:action="@{/manageTopic(currentUser=${currentUser},isUpdateSuccess=null)}">
+								<form  th:action="@{/auditTopicHtml(currentUser=${currentUser},isUpdateSuccess=null)}">
 									<td>跳转到第:<input type="text" name="page" size="5"/>页</td>
 									<td><input type="hidden" name="currentUser" th:value="${currentUser}"></td>
 									<td><input type="submit" value="确定"></td>

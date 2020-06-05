@@ -86,7 +86,10 @@
 								<td th:text="${topic.id}"></td>
 								<td th:text="${topic.topicname}"></td>
 								<td th:text="${#strings.abbreviate(topic.topicdescribe,10)}"></td>
-								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
+								<td>
+									<a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink.split('/')[5]}" download="" th:if="${topic.downloadlink}!=null"></a>
+									<a  th:text="还未导入" download="" th:if="${topic.downloadlink}==null" ></a>
+								</td>
 								<td th:text="${teacher.teaname}" th:each="teacher:${teachers}" th:if="${teacher.id}==${topic.teaid}" th:value="${teacher.id}"></td>
 								<td th:text="${#dates.format(topic.releasetime,'yyyy-MM-dd HH:mm:ss')}"></td>
 								<td th:text="${#dates.format(topic.choosedeadline,'yyyy-MM-dd HH:mm:ss')}"></td>

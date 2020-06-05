@@ -65,7 +65,7 @@
 						</form>
 						<form th:action="@{/selectCaseLib}" class="form-horizontal" method="post">
 							<div class="row form-group">
-								<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="teaId"><strong>按教师查询:</strong></label>
+								<label class="control-label " style="float:left;margin-top:5px;cursor:pointer" for="teaId"><strong>&nbsp;&nbsp;&nbsp;&nbsp;按教师查询:</strong></label>
 								<div class="col-lg-5 col-md-6">
 									<input name="Keyword" type="hidden"   th:value="${keyword}">
 									<input type="hidden" name="Type" th:value="1">
@@ -103,7 +103,7 @@
 								<td th:text="${outstandingcase.casename}"></td>
 								<td th:text="${#strings.abbreviate(outstandingcase.casedescribe,10)}"></td>
 								<td th:text="${teacher.teaname}" th:each="teacher:${teachers}" th:if="${teacher.id}==${outstandingcase.teaid}" th:value="${teacher.id}"></td>
-								<td><a th:href="@{${outstandingcase.downloadlink}}" th:text="${outstandingcase.downloadlink}" download="" ></a></td>
+								<td><a th:href="@{${outstandingcase.downloadlink}}" th:text="${outstandingcase.downloadlink.split('/')[5]}" download="" ></a></td>
 								<td th:text="${outstandingcase.technology}"></td>
 								<td th:text="${outstandingcase.groupmember}"></td>
 								<td th:text="${#dates.format(outstandingcase.submittime,'yyyy-MM-dd HH:mm:ss')}"></td>

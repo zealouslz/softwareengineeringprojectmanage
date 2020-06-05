@@ -70,11 +70,11 @@
 							<tr th:each="stagetopic:${stagetopics}">
 								<td th:text="${stagetopic.id}"></td>
 								<td th:text="${stagetopic.stagename}"></td>
-								<td th:text="${stagetopic.stagedescribe}"></td>
+								<td th:text="${#strings.abbreviate(stagetopic.stagedescribe,10)}"></td>
 								<td th:text="${teacher.teaname}" ></td>
 								<td th:text="${#dates.format(stagetopic.releasetime,'yyyy-MM-dd HH:mm:ss')}" ></td>
 								<td th:text="${#dates.format(stagetopic.deadline,'yyyy-MM-dd HH:mm:ss')}" ></td>
-								<td><a th:href="@{${stagetopic.downloadlink}}" th:text="${stagetopic.downloadlink}" download="" ></a></td>
+								<td><a th:href="@{${stagetopic.downloadlink}}" th:text="${stagetopic.downloadlink.split('/')[5]}" download="" ></a></td>
 								<td>
 									<a  th:each="stagetopicresult:${stagetopicresults}" th:if="${student.isgroupleader==1} and ${stagetopicresult.stagetopicid==stagetopic.id} and ${stagetopicresult.downloadlink.length()>0} and ${stagetopicresult.ispass==null}">已提交，等待老师查看</a>
 									<a  th:each="stagetopicresult:${stagetopicresults}" th:if="${student.isgroupleader==1} and ${stagetopicresult.stagetopicid==stagetopic.id} and ${stagetopicresult.downloadlink.length()>0} and ${stagetopicresult.ispass==0}">未通过，请重新提交</a>

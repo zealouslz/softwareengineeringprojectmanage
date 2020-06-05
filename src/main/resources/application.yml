@@ -2,9 +2,9 @@ spring:
   datasource:
     #   数据源基本配置
     username: root
-    password: root
+    password: 126620
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/graduationproject?serverTimezone=UTC&serverTimezone=GMT%2B8
+    url: jdbc:mysql://39.102.60.45:3306/graduationproject?serverTimezone=UTC&serverTimezone=GMT%2B8
     type: com.alibaba.druid.pool.DruidDataSource
     #   数据源其他配置
     initialSize: 5
@@ -54,3 +54,31 @@ mybatis:
   mapper-locations: classpath:mybatis/mapper/*Mapper.xml
 
 myqueue: boot-active-queue
+
+uploadTopicFile:
+  resourceHandler: /uploadFile/topic/   #请求 url 中的资源映射
+  location: /home/uploadFile/topic/     #自定义上传文件本地保存路径
+
+uploadTopicResultFile:
+  resourceHandler: /uploadFile/topicResult/   #请求 url 中的资源映射
+  location: /home/uploadFile/topicResult/     #自定义上传文件本地保存路径
+
+uploadStageTopicFile:
+  resourceHandler: /uploadFile/stageTopic/   #请求 url 中的资源映射
+  location: /home/uploadFile/stageTopic/     #自定义上传文件本地保存路径
+
+uploadStageTopicResultFile:
+  resourceHandler: /uploadFile/stageTopicResult/   #请求 url 中的资源映射
+  location: /home/uploadFile/stageTopicResult/
+
+uploadBlockTaskFile:
+  resourceHandler: /uploadFile/blockTask/   #请求 url 中的资源映射
+  location: /home/uploadFile/blockTask/
+
+uploadBlockTaskResultFile:
+  resourceHandler: /uploadFile/blockTaskResult/   #请求 url 中的资源映射
+  location: /home/uploadFile/blockTaskResult/
+
+uploadOutstandingCaseFile:
+  resourceHandler: /uploadFile/OutstandingCase/   #请求 url 中的资源映射
+  location: /home/uploadFile/OutstandingCase/

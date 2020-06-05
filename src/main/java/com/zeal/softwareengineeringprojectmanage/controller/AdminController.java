@@ -49,10 +49,14 @@ public class AdminController {
     StagetopicService stagetopicService;
     @Autowired
     TopicService topicService;
-    @Value("${file.uploadOutstandingCaseFolder}")
-    private String outstandingCasePath;
-    @Value("${file.uploadTopicFolder}")
+    @Value("${uploadOutstandingCaseFile.location}")
+    private String uploadOutstandingCaseFilePath; //选题文件上传的地址
+    @Value("${uploadOutstandingCaseFile.resourceHandler}")
+    private String uploadOutstandingCaseFileResourceHandler;
+    @Value("${uploadTopicFile.location}")
     private String uploadTopicFilePath; //选题文件上传的地址
+    @Value("${uploadTopicFile.resourceHandler}")
+    private String uploadTopicResourceHandler;
     @Autowired
     OutstandingcaseService outstandingcaseService;
 
@@ -139,7 +143,6 @@ public class AdminController {
             logger.info("学生信息文件格式错误");
             return "redirect:/studentImport";
         }
-
 //连接数据库部分
         for (int i = 0; i < list.size(); i++) {
             List<Object> lo = list.get(i);
@@ -605,7 +608,7 @@ public class AdminController {
                                       Integer teaid,
                                       String Keyword,
                                       Integer Type,
-                                      MultipartFile file,Model model) throws UnsupportedEncodingException {
+                                      MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
 
         logger.info("管理员更新优秀案例信息");
         if(file.isEmpty()){
@@ -629,7 +632,8 @@ public class AdminController {
                 return "redirect:/adminManageCase?teaId="+teaId+ "&Type=" + Type + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&Keyword=" + Keyword;
             }
         }
-        File deleteFile = new File(downloadlink);
+        String oldFilename=downloadlink.split("/")[5];
+        File deleteFile = new File(uploadOutstandingCaseFilePath,oldFilename);
         if(deleteFile!=null){
             //文件不为空，执行删除
             deleteFile.delete();
@@ -644,15 +648,17 @@ public class AdminController {
         outstandingcase.setGroupmember(groupmember);
         outstandingcase.setTechnology(technology);
         outstandingcase.setTeaid(teaid);
-        File dir = new File(outstandingCasePath);
+        File dir = new File(uploadOutstandingCaseFilePath);
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = outstandingCasePath + file.getOriginalFilename();
-        outstandingcase.setDownloadlink(path);
+        String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String fileName = file.getOriginalFilename();
+        String fileServerPath = basePath + uploadOutstandingCaseFileResourceHandler.substring(0, uploadOutstandingCaseFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+        outstandingcase.setDownloadlink(fileServerPath);
         File tempFile = null;
         try {
-            tempFile =  new File(path);
+            tempFile =  new File(uploadOutstandingCaseFilePath,fileName);
             FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
         }catch (Exception e){
             e.printStackTrace();
@@ -790,7 +796,8 @@ public class AdminController {
                 return "redirect:/adminManageTopic?page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8") + "&teaId=" + teaId + "&Type=" + Type;
             }
         }
-        File deleteFile = new File(downloadlink);
+        String oldFileName=downloadlink.split("/")[5];
+        File deleteFile = new File(uploadTopicFilePath,oldFileName);
         if(deleteFile!=null){
             //文件不为空，执行删除
             deleteFile.delete();
@@ -814,9 +821,11 @@ public class AdminController {
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = uploadTopicFilePath + file.getOriginalFilename();
-        topic.setDownloadlink(path);
-        File tempFile =  tempFile =  new File(path);
+        String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String fileName = file.getOriginalFilename();
+        String fileServerPath = basePath + uploadTopicResourceHandler.substring(0, uploadTopicResourceHandler.lastIndexOf("/") + 1) + fileName;
+        topic.setDownloadlink(fileServerPath);
+        File tempFile = new File(uploadTopicFilePath,fileName);
         if(tempFile.exists()){
             String IsSuccess="文件已存在，请重新选择！";
             if (teaId==null){

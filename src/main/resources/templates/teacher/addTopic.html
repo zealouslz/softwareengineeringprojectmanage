@@ -51,7 +51,7 @@
 				<!--引入sidebar-->
 				<div th:replace="commons/bar::#teachersidebar"></div>
 				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-					<h3>请填写选题信息</h3>
+					<h4>请填写选题信息</h4>
 					<!--需要区分是员工修改还是添加；-->
 					<form th:action="@{/addSingleTopic}" class="form-horizontal" method="post" enctype="multipart/form-data">
 						<div class="row form-group">
@@ -101,6 +101,22 @@
 						<button type="submit" class="btn btn-primary" >添加</button>
 						<a href="#" onClick="javascript:history.back(-1);">返回</a>
 					</form>
+					<br><br>
+					<h5>批量导入</h5>
+					<form method="post" enctype="multipart/form-data" id="form" action="/importTopic">
+						<div class="row form-group">
+							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="filename"><strong>上传文件:</strong></label>
+							<div class="col-lg-5 col-md-6">
+								<input type="file" id="filename" name="filename"/>
+								<input type="hidden" name="teaId" th:value="${teacher.id}"/>
+							</div>
+						</div>
+						<p style="color: red" th:text="${IsSuccess}" th:if="${not #strings.isEmpty(IsSuccess)}"></p>
+						<button type="submit" class="btn btn-primary" >添加</button>
+					</form>
+
+					<p style="color: red">注：导入的文件必须是.xls或者.xlsx格式；<br>
+						&nbsp;&nbsp;列依次是“选题名，选题描述，指导教师id,截止时间，选题截止时间，人数上限”</p>
 				</main>
 
 			</div>

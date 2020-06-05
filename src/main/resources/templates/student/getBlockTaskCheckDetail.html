@@ -63,7 +63,7 @@
 							</tr>
 							<tr>
 								<td>已上传的文档</td>
-								<td><a th:href="@{${blocktask.uploadfile}}" th:text="${blocktask.uploadfile}" download="" ></a></td>
+								<td><a th:href="@{${blocktask.uploadfile}}" th:text="${blocktask.uploadfile.split('/')[5]}" download="" ></a></td>
 							</tr>
 
 							<tr>

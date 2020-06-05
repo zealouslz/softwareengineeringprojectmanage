@@ -62,11 +62,14 @@
 							</tr>
 							<tr>
 								<td>选题描述</td>
-								<td th:text="${#strings.abbreviate(topic.topicdescribe,20)}"></td>
+								<td th:text="${topic.topicdescribe}"></td>
 							</tr>
 							<tr>
 								<td>参考文档</td>
-								<td><a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" ></a></td>
+								<td>
+									<a th:href="@{${topic.downloadlink}}" th:text="${topic.downloadlink}" download="" th:if="${topic.downloadlink}!=null"></a>
+									<a th:text="暂未上传"  th:if="${topic.downloadlink}==null"></a>
+								</td>
 							</tr>
 							<tr>
 								<td>指导教师</td>
@@ -87,7 +90,7 @@
 
 							<tr th:if=" ${topic.result.length()>0}">
 								<td>已提交的文件</td>
-								<td><a th:href="@{${topic.result}}" th:text="${topic.result}" download="" ></a></td>
+								<td><a th:href="@{${topic.result}}" th:text="${topic.result.split('/')[5]}" download="" ></a></td>
 							</tr>
 
 							<tr>

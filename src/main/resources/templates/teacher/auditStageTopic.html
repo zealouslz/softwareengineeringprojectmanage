@@ -69,7 +69,10 @@
 								<td th:text="${stagetopicresult.id}"></td>
 								<td th:text="${topic.topicname}" th:each="topic:${topics}" th:if="${topic.id==stagetopicresult.topicid}"></td>
 								<td th:text="${stagetopic.stagename}" th:each="stagetopic:${stagetopics}" th:if="${stagetopic.id==stagetopicresult.stagetopicid}"></td>
-								<td><a th:href="@{${stagetopicresult.downloadlink}}" th:text="${stagetopicresult.downloadlink}" download="" ></a></td>
+								<td>
+									<a th:href="@{${stagetopicresult.downloadlink}}" th:text="${stagetopicresult.downloadlink.split('/')[5]}" th:if="${stagetopicresult.downloadlink!=''}" download="" ></a>
+									<a th:text="${'暂未提交'}" th:if="${stagetopicresult.downloadlink==''}" download="" ></a>
+								</td>
 								<td th:text="${#dates.format(stagetopicresult.submittime,'yyyy-MM-dd HH:mm:ss')}" ></td>
 								<td th:text="${#dates.format(stagetopic.deadline,'yyyy-MM-dd HH:mm:ss')}" th:each="stagetopic:${stagetopics}" th:if="${stagetopic.id==stagetopicresult.stagetopicid}"></td>
 								<td>

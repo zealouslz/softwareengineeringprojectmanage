@@ -46,14 +46,22 @@ public class StudentController {
     ScoreService scoreService;
     @Autowired
     BlocktaskService blocktaskService;
-    @Value("${file.uploadStageTopicResultFolder}")
-    private String stageTopicResultPath;
-    @Value("${file.uploadBlockTaskFolder}")
-    private String blockTaskPath;
-    @Value("${file.uploadBlockTaskResultFolder}")
-    private String blockTaskResultPath;
-    @Value("${file.uploadTopicResultFolder}")
-    private String topicResultPath;
+    @Value("${uploadStageTopicResultFile.location}")
+    private String uploadStageTopicResultFilePath; //选题文件上传的地址
+    @Value("${uploadStageTopicResultFile.resourceHandler}")
+    private String uploadStageTopicResultResourceHandler;
+    @Value("${uploadBlockTaskFile.location}")
+    private String uploadBlockTaskFilePath; //选题文件上传的地址
+    @Value("${uploadBlockTaskFile.resourceHandler}")
+    private String uploadBlockTaskFileResourceHandler;
+    @Value("${uploadBlockTaskResultFile.location}")
+    private String uploadBlockTaskResultFilePath; //选题文件上传的地址
+    @Value("${uploadBlockTaskResultFile.resourceHandler}")
+    private String uploadBlockTaskResultFileResourceHandler;
+    @Value("${uploadTopicResultFile.location}")
+    private String uploadTopicResultFilePath; //选题文件上传的地址
+    @Value("${uploadTopicResultFile.resourceHandler}")
+    private String uploadTopicResultResourceHandler;
 
     Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -62,7 +70,7 @@ public class StudentController {
         logger.info("学生进入选题界面");
         Page p=new Page();
         p.setCurrentPage(page);
-        p.setPageSize(5);
+        p.setPageSize(10);
         Student student = studentService.selectByPrimaryKey(stuId);
         List<Topic> topicsAll = topicService.selectByTeaIdAddChooseDeadline(student.getTeaid());
         p.setTotalUsers(topicsAll.size());
@@ -177,7 +185,7 @@ public class StudentController {
     }
 
     @RequestMapping("uploadStageFile")
-    public String uploadStageFile(Integer topicid, Integer stagetopicid,Integer stuId, MultipartFile file,Model model) throws UnsupportedEncodingException {
+    public String uploadStageFile(Integer topicid, Integer stagetopicid,Integer stuId, MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
         logger.info("学生上传阶段性任务结果");
         if(!file.isEmpty()){
             Stagetopicresult stagetopicresult=new Stagetopicresult();
@@ -185,13 +193,15 @@ public class StudentController {
             stagetopicresult.setTopicid(topicid);
             Date date=new Date();
             stagetopicresult.setSubmittime(date);
-            File dir = new File(stageTopicResultPath);
+            File dir = new File(uploadStageTopicResultFilePath);
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = stageTopicResultPath + file.getOriginalFilename();
-            stagetopicresult.setDownloadlink(path);
-            File tempFile = tempFile =  new File(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadStageTopicResultResourceHandler.substring(0, uploadStageTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
+            stagetopicresult.setDownloadlink(fileServerPath);
+            File tempFile =  new File(uploadStageTopicResultFilePath,fileName);
             if(tempFile.exists()){
                 model.addAttribute("IsSuccess","文件已存在，请重新上传!");
                 logger.info("上传失败，阶段性任务结果已存在");
@@ -259,7 +269,7 @@ public class StudentController {
     }
 
     @RequestMapping("/changeStageFile")
-    public String changeStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+    public String changeStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file,HttpServletRequest req) throws UnsupportedEncodingException {
         logger.info("学生重新提交阶段性结果文件");
         if(file.isEmpty()){
             String isSuccess="文件为空，请重新选择！";
@@ -267,19 +277,22 @@ public class StudentController {
             return "redirect:/changeStageResultFile?stagetopicresultId="+stagetopicresultid+"&stuId="+stuId+"&isSuccess="+URLEncoder.encode(isSuccess,"UTF-8");
         }else {
             Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
-            File f=new File(stagetopicresult.getDownloadlink());
+            String oldFileName=stagetopicresult.getDownloadlink().split("/")[5];
+            File f=new File(uploadStageTopicResultFilePath,oldFileName);
             if(f.exists()){
                 f.delete();
             }
-            File dir = new File(stageTopicResultPath);
+            File dir = new File(uploadStageTopicResultFilePath);
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = stageTopicResultPath + file.getOriginalFilename();
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadStageTopicResultResourceHandler.substring(0, uploadStageTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
             Date date=new Date();
             stagetopicresult.setSubmittime(date);
-            stagetopicresult.setDownloadlink(path);
-            File tempFile =  tempFile =  new File(path);
+            stagetopicresult.setDownloadlink(fileServerPath);
+            File tempFile =  new File(uploadStageTopicResultFilePath,fileName);
             if(tempFile.exists()){
                 String isSuccess="文件已存在，请重新选择！";
                 logger.info("阶段性结果文件已存在，上传失败");
@@ -322,7 +335,7 @@ public class StudentController {
     }
 
     @RequestMapping("/reUploadStageFile")
-    public String reUploadStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file) throws UnsupportedEncodingException {
+    public String reUploadStageFile(Integer stagetopicresultid,Integer stuId,MultipartFile file,HttpServletRequest req) throws UnsupportedEncodingException {
         logger.info("组长重新提交阶段性任务文件");
         if (file.isEmpty()) {
             String isSuccess = "文件为空，请重新选择！";
@@ -330,21 +343,24 @@ public class StudentController {
             return "redirect:/changeStageResultFile?stagetopicresultId=" + stagetopicresultid + "&stuId=" + stuId + "&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
         } else {
             Stagetopicresult stagetopicresult = stagetopicresultService.selectByPrimaryKey(stagetopicresultid);
-            File f = new File(stagetopicresult.getDownloadlink());
+            String oldFileName=stagetopicresult.getDownloadlink().split("/")[5];
+            File f = new File(uploadStageTopicResultFilePath,oldFileName);
             if (f.exists()) {
                 f.delete();
             }
-            File dir = new File(stageTopicResultPath);
+            File dir = new File(uploadStageTopicResultFilePath);
             if (!dir.exists()) {
                 dir.mkdir();
             }
-            String path = stageTopicResultPath + file.getOriginalFilename();
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadStageTopicResultResourceHandler.substring(0, uploadStageTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
             Date date = new Date();
             stagetopicresult.setSubmittime(date);
-            stagetopicresult.setDownloadlink(path);
+            stagetopicresult.setDownloadlink(fileServerPath);
             Integer integer = new Integer(2);
             stagetopicresult.setIspass(integer.byteValue());
-            File tempFile = tempFile = new File(path);
+            File tempFile =  new File(uploadStageTopicResultFilePath,fileName);
             if (tempFile.exists()) {
                 String isSuccess = "文件已存在，请重新选择！";
                 logger.info("阶段性任务文件已存在");
@@ -429,8 +445,8 @@ public class StudentController {
                                     Integer stuId,
                                     String releaseTime,
                                     String deadline,
-                                    MultipartFile file,Model model) throws UnsupportedEncodingException, ParseException {
-            logger.info("添加阶段性任务");
+                                    MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException, ParseException {
+            logger.info("添加分块任务");
         if(!file.isEmpty()){
                 Blocktask blocktask=new Blocktask();
                 blocktask.setBlockname(blockTopicName);
@@ -447,16 +463,18 @@ public class StudentController {
                 Date date2 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
                 blocktask.setDeadline(date1);
                 blocktask.setReleasetime(date2);
-                File dir = new File(blockTaskPath);
+                File dir = new File(uploadBlockTaskFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = blockTaskPath + file.getOriginalFilename();
-                blocktask.setDownloadlink(path);
-                File tempFile = tempFile =  new File(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadBlockTaskFileResourceHandler.substring(0, uploadBlockTaskFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+                blocktask.setDownloadlink(fileServerPath);
+                File tempFile =   new File(uploadBlockTaskFilePath,fileName);
                 if(tempFile.exists()){
                     String isSuccess="文件已存在，请重新选择文件";
-                    logger.info("阶段性任务参考文件已存在");
+                    logger.info("分块任务参考文件已存在");
                     return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                 }else {
                     try {
@@ -464,7 +482,7 @@ public class StudentController {
                     }catch (Exception e){
                         e.printStackTrace();
                         String isSuccess="文件上传失败，请重新尝试";
-                        logger.info("阶段性任务参考文件上传失败");
+                        logger.info("分块任务参考文件上传失败");
                         return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                     }
                     int insert = blocktaskService.insert(blocktask);
@@ -474,13 +492,13 @@ public class StudentController {
                         return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
                     }else {
                         String isSuccess="文件上传失败，请重新尝试";
-                        logger.info("阶段性任务参考文件上传失败");
+                        logger.info("分块任务参考文件上传失败");
                         return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
                     }
                 }
             }else {
                 String isSuccess="文件为空，上传失败";
-                logger.info("阶段性任务参考文件为空，上传失败");
+                logger.info("分块任务参考文件为空，上传失败");
                 return "redirect:/addBlockTopicHtml?stuId="+groupLeaderId+"&isSuccess=" + URLEncoder.encode(isSuccess, "UTF-8");
             }
         }
@@ -513,7 +531,8 @@ public class StudentController {
                                       String releaseTime,
                                       String deadline,
                                       String downloadlink,
-                                      MultipartFile file) throws ParseException, UnsupportedEncodingException {
+                                      MultipartFile file,
+                                      HttpServletRequest req) throws ParseException, UnsupportedEncodingException {
             logger.info("更新分块任务信息");
         if(file.isEmpty()){
                 Blocktask blocktask=new Blocktask();
@@ -538,7 +557,8 @@ public class StudentController {
                 logger.info("成功更新"+i+"条分块任务");
                 return "redirect:/blockStageTopicHtml?stuId=" + groupLeaderId + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
             }
-            File deleteFile = new File(downloadlink);
+            String oldFileName=downloadlink.split("/")[5];
+            File deleteFile = new File(uploadBlockTaskFilePath,oldFileName);
             if(deleteFile!=null){
                 //文件不为空，执行删除
                 deleteFile.delete();
@@ -558,13 +578,15 @@ public class StudentController {
             Date date3 = simpleDateFormat.parse(str2[0]+" "+str2[1]);
             blocktask.setDeadline(date2);
             blocktask.setReleasetime(date3);
-            File dir = new File(blockTaskPath);
+            File dir = new File(uploadBlockTaskFilePath);
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = blockTaskPath + file.getOriginalFilename();
-            blocktask.setDownloadlink(path);
-            File tempFile =  tempFile =  new File(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadBlockTaskFileResourceHandler.substring(0, uploadBlockTaskFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+            blocktask.setDownloadlink(fileServerPath);
+            File tempFile = new File(uploadBlockTaskFilePath,fileName);
             if(tempFile.exists()){
                 String isSuccess="文件已存在，请重新选择！";
                 logger.info("分块任务参考文件已存在，上传失败");
@@ -654,15 +676,17 @@ public class StudentController {
         }
 
         @RequestMapping("/uploadBlockTask")
-        public String uploadBlockTask(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
+        public String uploadBlockTask(Integer blockId,Integer stuId,MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("提交分块任务结果文件");
             if(!file.isEmpty()){
-                File dir = new File(blockTaskResultPath);
+                File dir = new File(uploadBlockTaskResultFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = blockTaskResultPath + file.getOriginalFilename();
-                File tempFile = tempFile =  new File(path);
+                String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+                String fileName = file.getOriginalFilename();
+                String fileServerPath = basePath + uploadBlockTaskResultFileResourceHandler.substring(0, uploadBlockTaskResultFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile = new File(uploadBlockTaskResultFilePath,fileName);
                 if(tempFile.exists()){
                    String IsSuccess="文件已存在，请重新上传!";
                     logger.info("分块任务结果文件已存在");
@@ -677,7 +701,7 @@ public class StudentController {
                         logger.info("分块结果文件上传失败");
                         return  "redirect:/uploadBlockTaskFile?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
-                    int i = blocktaskService.updateUploadFile(blockId,path,new Date());
+                    int i = blocktaskService.updateUploadFile(blockId,fileServerPath,new Date());
                     if(i>0){
                         String isUpdateSuccess="成功提交";
                         logger.info("成功上传分块任务结果");
@@ -696,7 +720,7 @@ public class StudentController {
         }
 
         @RequestMapping("/changeBlockTaskFileHtml")
-        public String changeBlockTaskFileHtml(Integer id,Integer stuId,String IsSuccess,Model model){
+        public String changeBlockTaskFileHtml(Integer id,Integer stuId,String IsSuccess,Model model,HttpServletRequest req){
             logger.info("进入重新提交分块任务结果界面");
             Blocktask blocktask = blocktaskService.selectByPrimaryKey(id);
             Topic topic = topicService.selectByPrimaryKey(blocktask.getTopicid());
@@ -710,7 +734,7 @@ public class StudentController {
         }
 
         @RequestMapping("/changeBlockTaskFile")
-        public String changeBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
+        public String changeBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("重新提交分块任务结果");
         if(file.isEmpty()){
                 String IsSuccess="文件为空，请重新选择！";
@@ -718,16 +742,19 @@ public class StudentController {
                 return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
             }else {
                 Blocktask blocktask = blocktaskService.selectByPrimaryKey(blockId);
-                File f=new File(blocktask.getUploadfile());
+                String oldFileName=blocktask.getUploadfile().split("/")[5];
+                File f=new File(uploadBlockTaskResultFilePath,oldFileName);
                 if(f.exists()){
                     f.delete();
                 }
-                File dir = new File(blockTaskResultPath);
+                File dir = new File(uploadBlockTaskResultFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = blockTaskResultPath + file.getOriginalFilename();
-                File tempFile =  tempFile =  new File(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadBlockTaskResultFileResourceHandler.substring(0, uploadBlockTaskResultFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile = new File(uploadBlockTaskResultFilePath,fileName);
                 if(tempFile.exists()){
                     String IsSuccess="文件已存在，请重新选择！";
                     logger.info("分块任务结果文件已存在");
@@ -741,7 +768,7 @@ public class StudentController {
                         logger.info("分块任务结果文件重新提交失败");
                         return "redirect:/changeBlockTaskFileHtml?id="+blockId+"&stuId="+stuId+"&IsSuccess="+URLEncoder.encode(IsSuccess,"UTF-8");
                     }
-                    int i = blocktaskService.updateUploadFile(blockId, path, new Date());
+                    int i = blocktaskService.updateUploadFile(blockId, fileServerPath, new Date());
                     if(i>0) {
                         String isUpdateSuccess="成功重新提交";
                         logger.info("分块任务结果文件成功重新提交");
@@ -769,7 +796,7 @@ public class StudentController {
             return "student/reUploadBlockTaskFile";
         }
         @RequestMapping("/reUploadBlockTaskFile")
-        public String reUploadBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model) throws UnsupportedEncodingException {
+        public String reUploadBlockTaskFile(Integer blockId,Integer stuId,MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("重新提交分块任务结果文件");
            if (file.isEmpty()) {
                 String IsSuccess = "文件为空，请重新选择！";
@@ -777,16 +804,19 @@ public class StudentController {
                 return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
             } else {
                 Blocktask blocktask = blocktaskService.selectByPrimaryKey(blockId);
-                File f = new File(blocktask.getUploadfile());
+                String oldFileName=blocktask.getUploadfile().split("/")[5];
+                File f = new File(uploadBlockTaskResultFilePath,oldFileName);
                 if (f.exists()) {
                     f.delete();
                 }
-                File dir = new File(blockTaskResultPath);
+                File dir = new File(uploadBlockTaskResultFilePath);
                 if (!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = blockTaskResultPath + file.getOriginalFilename();
-                File tempFile = tempFile = new File(path);
+               String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+               String fileName = file.getOriginalFilename();
+               String fileServerPath = basePath + uploadBlockTaskResultFileResourceHandler.substring(0, uploadBlockTaskResultFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile =  new File(uploadBlockTaskResultFilePath,fileName);
                 if (tempFile.exists()) {
                     String IsSuccess = "文件已存在，请重新选择！";
                     logger.info("分块任务结果文件已存在，重新提交失败");
@@ -800,7 +830,7 @@ public class StudentController {
                         logger.info("分块任务结果文件重新提交失败");
                         return "redirect:/reUploadBlockTaskFileHtml?id=" + blockId + "&stuId=" + stuId + "&IsSuccess=" + URLEncoder.encode(IsSuccess, "UTF-8");
                     }
-                    int i = blocktaskService.updateIsPassAndUploadAndSubTime(blockId,2,new Date(),path);
+                    int i = blocktaskService.updateIsPassAndUploadAndSubTime(blockId,2,new Date(),fileServerPath);
                     if (i > 0) {
                         String isUpdateSuccess="成功提交";
                         logger.info("分块任务结果文件成功重新提交");
@@ -870,7 +900,7 @@ public class StudentController {
         @ResponseBody
         public String checkBlockTask(HttpServletRequest request,HttpServletResponse response) throws JSONException {
             logger.info("审核分块任务");
-           int blockId = Integer.parseInt(request.getParameter("blockId"));
+            int blockId = Integer.parseInt(request.getParameter("blockId"));
             int ispass = Integer.parseInt(request.getParameter("ispass"));
             int score = Integer.parseInt(request.getParameter("score"));
             String suggestion = request.getParameter("suggestion");
@@ -903,19 +933,21 @@ public class StudentController {
         }
 
         @RequestMapping("/uploadResult")
-        public String uploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+        public String uploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("上传选题完成结果");
             if (file.isEmpty()){
                String isChooseSuccess="文件不能为空，请重新选择！";
                 logger.info("选题结果页面为空，上传失败");
                return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
-                File dir = new File(topicResultPath);
+                File dir = new File(uploadTopicResultFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = topicResultPath + file.getOriginalFilename();
-                File tempFile = tempFile =  new File(path);
+                String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+                String fileName = file.getOriginalFilename();
+                String fileServerPath = basePath + uploadTopicResultResourceHandler.substring(0, uploadTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile =   new File(uploadTopicResultFilePath,fileName);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
                     logger.info("选题结果文件已存在，上传失败");
@@ -930,7 +962,7 @@ public class StudentController {
                         logger.info("选题结果文件上传异常");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
-                    int i = topicService.uploadResult(topicId,path,new Date());
+                    int i = topicService.uploadResult(topicId,fileServerPath,new Date());
                     if(i>0){
                         String isChooseSuccess="成功提交";
                         logger.info("成功提交选题结果");
@@ -945,7 +977,7 @@ public class StudentController {
         }
 
         @RequestMapping("/reUploadResult")
-        public String reUploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+        public String reUploadResult(Integer topicId,Integer stuId,MultipartFile file, Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("重新提交选题结果");
             if (file.isEmpty()){
                 String isChooseSuccess="文件不能为空，请重新选择！";
@@ -953,16 +985,19 @@ public class StudentController {
                 return "redirect:/yourtopic?stuId="+stuId+ URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 Topic topic = topicService.selectByPrimaryKey(topicId);
-                File f = new File(topic.getResult());
+                String oldFileName=topic.getResult().split("/")[5];
+                File f = new File(uploadTopicResultFilePath,oldFileName);
                 if (f.exists()) {
                     f.delete();
                 }
-                File dir = new File(topicResultPath);
+                File dir = new File(uploadTopicResultFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = topicResultPath + file.getOriginalFilename();
-                File tempFile = tempFile =  new File(path);
+                String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+                String fileName = file.getOriginalFilename();
+                String fileServerPath = basePath + uploadTopicResultResourceHandler.substring(0, uploadTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile =   new File(uploadTopicResultFilePath,fileName);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
                     logger.info("选题结果文件已存在");
@@ -977,7 +1012,7 @@ public class StudentController {
                         logger.info("选题结果文件上传失败");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
-                    int i = topicService.uploadResultAndIspass(topicId,path,new Date(),2);
+                    int i = topicService.uploadResultAndIspass(topicId,fileServerPath,new Date(),2);
                     if(i>0){
                         String isChooseSuccess="成功重新提交";
                         logger.info("选题结果文件成功重新提交");
@@ -992,7 +1027,7 @@ public class StudentController {
         }
 
         @RequestMapping("/changeResult")
-        public String changeResult(Integer topicId,Integer stuId,MultipartFile file, Model model) throws UnsupportedEncodingException {
+        public String changeResult(Integer topicId,Integer stuId,MultipartFile file, Model model,HttpServletRequest req) throws UnsupportedEncodingException {
             logger.info("替换选题结果文件");
             if (file.isEmpty()){
                 String isChooseSuccess="文件不能为空，请重新选择！";
@@ -1000,16 +1035,19 @@ public class StudentController {
                 return "redirect:/yourtopic?stuId="+stuId+ "&isChooseSuccess="+URLEncoder.encode(isChooseSuccess, "UTF-8");
             }else {
                 Topic topic = topicService.selectByPrimaryKey(topicId);
-                File f = new File(topic.getResult());
+                String oldFileName=topic.getResult().split("/")[5];
+                File f = new File(uploadTopicResultFilePath,oldFileName);
                 if (f.exists()) {
                     f.delete();
                 }
-                File dir = new File(topicResultPath);
+                File dir = new File(uploadTopicResultFilePath);
                 if(!dir.exists()) {
                     dir.mkdir();
                 }
-                String path = topicResultPath + file.getOriginalFilename();
-                File tempFile = tempFile =  new File(path);
+                String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+                String fileName = file.getOriginalFilename();
+                String fileServerPath = basePath + uploadTopicResultResourceHandler.substring(0, uploadTopicResultResourceHandler.lastIndexOf("/") + 1) + fileName;
+                File tempFile =  new File(uploadTopicResultFilePath,fileName);
                 if(tempFile.exists()){
                     String isChooseSuccess="文件已存在，请重新上传!";
                     logger.info("选题结果文件已存在，上传失败");
@@ -1024,7 +1062,7 @@ public class StudentController {
                         logger.info("选题结果文件上传异常");
                         return "redirect:/yourtopic?stuId="+stuId+"&isChooseSuccess="+ URLEncoder.encode(isChooseSuccess, "UTF-8");
                     }
-                    int i = topicService.uploadResult(topicId,path,new Date());
+                    int i = topicService.uploadResult(topicId,fileServerPath,new Date());
                     if(i>0){
                         String isChooseSuccess="成功修改！";
                         logger.info("成功修改选题结果文件");

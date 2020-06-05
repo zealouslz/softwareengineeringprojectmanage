@@ -16,15 +16,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,6 +43,8 @@ public class TeacherController {
     @Autowired
     StudentService studentService;
     @Autowired
+    private ImportService importService;
+    @Autowired
     StagetopicService stagetopicService;
     @Autowired
     ScoreService scoreService;
@@ -55,12 +57,27 @@ public class TeacherController {
     Logger logger = LoggerFactory.getLogger(getClass());
     @Autowired
     ClazzService clazzService;
-    @Value("${file.uploadTopicFolder}")
+    @Value("${uploadTopicFile.location}")
     private String uploadTopicFilePath; //选题文件上传的地址
-    @Value("${file.uploadStageTopicFolder}")
+    @Value("${uploadTopicFile.resourceHandler}")
+    private String uploadTopicResourceHandler;
+    @Value("${uploadTopicResultFile.location}")
+    private String uploadTopicResultFilePath; //选题文件上传的地址
+    @Value("${uploadTopicResultFile.resourceHandler}")
+    private String uploadTopicResultResourceHandler;
+    @Value("${uploadStageTopicFile.location}")
     private String uploadStageTopicFilePath; //选题文件上传的地址
-    @Value("${file.uploadOutstandingCaseFolder}")
-    private String outstandingCasePath;
+    @Value("${uploadStageTopicFile.resourceHandler}")
+    private String uploadStageTopicResourceHandler;
+    @Value("${uploadStageTopicResultFile.location}")
+    private String uploadStageTopicResultFilePath; //选题文件上传的地址
+    @Value("${uploadStageTopicResultFile.resourceHandler}")
+    private String uploadStageTopicResultResourceHandler;
+    @Value("${uploadOutstandingCaseFile.location}")
+    private String uploadOutstandingCaseFilePath; //选题文件上传的地址
+    @Value("${uploadOutstandingCaseFile.resourceHandler}")
+    private String uploadOutstandingCaseFileResourceHandler;
+
     @RequestMapping("/manageTopic")
     public String manageTopic(Integer currentUser,Integer page,String isUpdateSuccess, Model model){
         logger.info("教师进入管理选题界面");
@@ -113,10 +130,12 @@ public class TeacherController {
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = uploadTopicFilePath + file.getOriginalFilename();
-            topic.setDownloadlink(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadTopicResourceHandler.substring(0, uploadTopicResourceHandler.lastIndexOf("/") + 1) + fileName;
+            topic.setDownloadlink(fileServerPath);
             topic.setReleasetime(date);
-            File tempFile = tempFile =  new File(path);
+            File tempFile =  new File(uploadTopicFilePath,fileName);
             if(tempFile.exists()){
                 model.addAttribute("IsSuccess","文件已存在，请重新选择");
                 logger.info("选题参考文件上传失败，文件已存在");
@@ -126,6 +145,7 @@ public class TeacherController {
             }
             try {
                 FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
+
             }catch (Exception e){
                 e.printStackTrace();
                 model.addAttribute("IsSuccess","文件上传失败");
@@ -145,6 +165,64 @@ public class TeacherController {
             model.addAttribute("teacher",teacher);
             return "teacher/addTopic";
         }
+    }
+
+    @RequestMapping("/importTopic")
+    public String importTopic(HttpServletRequest request, @RequestParam("teaId") Integer teaId,Model model) throws ParseException {
+        logger.info("批量导入选题信息");
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+
+        InputStream inputStream =null;
+        List<List<Object>> list = null;
+        int insert=0;
+        MultipartFile file = multipartRequest.getFile("filename");
+        if(file.isEmpty()){
+            model.addAttribute("IsSuccess", "文件不能为空");
+            Teacher teacher = teacherService.selectByPrimayKey(teaId);
+            model.addAttribute("teacher",teacher);
+            return "teacher/addTopic";
+        }
+        try {
+            inputStream = file.getInputStream();
+            list = importService.getBankListByExcel(inputStream,file.getOriginalFilename());
+            inputStream.close();
+        }catch (Exception e){
+            model.addAttribute("IsSuccess","文件格式错误请重新上传，必须是.xls或者.xlsx");
+            Teacher teacher = teacherService.selectByPrimayKey(teaId);
+            model.addAttribute("teacher",teacher);
+            return "teacher/addTopic";
+        }
+//连接数据库部分
+        for (int i = 0; i < list.size(); i++) {
+            List<Object> lo = list.get(i);
+            Topic topic=new Topic();
+            topic.setTopicname(String.valueOf(lo.get(1)));
+            topic.setTopicdescribe(String.valueOf(lo.get(2)));
+            topic.setTeaid((int)(Double.parseDouble(String.valueOf(lo.get(3)))));
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            System.out.println(String.valueOf(lo.get(4)));
+            topic.setDeadline(simpleDateFormat.parse(String.valueOf(lo.get(4))));
+            topic.setChoosedeadline(simpleDateFormat.parse(String.valueOf(lo.get(5))));
+            topic.setMaxsize((int)(Double.parseDouble(String.valueOf(lo.get(6)))));
+            Date date=new Date();
+            topic.setReleasetime(date);
+            try {
+                insert += topicService.insert(topic);
+            }
+            catch (Exception e){
+                model.addAttribute("IsSuccess", "插入失败，请检查表格格式或者班级id和教师id是否存在");
+                logger.info("导入失败，表中对应教师id不存在");
+                Teacher teacher = teacherService.selectByPrimayKey(teaId);
+                model.addAttribute("teacher",teacher);
+                return "teacher/addTopic";
+            }
+            //调用mapper中的insert方法
+        }
+        model.addAttribute("IsSuccess", "成功插入"+insert+"条数据");
+        logger.info("成功插入"+insert+"条选题信息");
+        Teacher teacher = teacherService.selectByPrimayKey(teaId);
+        model.addAttribute("teacher",teacher);
+        return "teacher/addTopic";
     }
 
     @RequestMapping("/getTopicDetail")
@@ -191,7 +269,8 @@ public class TeacherController {
             logger.info("教师"+isUpdateSuccess);
             return "redirect:/manageTopic?currentUser="+teaid+"&page=1&isUpdateSuccess="+URLEncoder.encode(isUpdateSuccess,"UTF-8");
         }
-        File deleteFile = new File(downloadlink);
+        String oldFileName=downloadlink.split("/")[5];
+        File deleteFile = new File(uploadTopicFilePath,oldFileName);
         if(deleteFile!=null){
             //文件不为空，执行删除
             deleteFile.delete();
@@ -215,9 +294,11 @@ public class TeacherController {
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = uploadTopicFilePath + file.getOriginalFilename();
-        topic.setDownloadlink(path);
-        File tempFile =  tempFile =  new File(path);
+        String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String fileName = file.getOriginalFilename();
+        String fileServerPath = basePath + uploadTopicResourceHandler.substring(0, uploadTopicResourceHandler.lastIndexOf("/") + 1) + fileName;
+        topic.setDownloadlink(fileServerPath);
+        File tempFile = new File(uploadTopicFilePath,fileName);
         if(tempFile.exists()){
             String IsSuccess="文件已存在，请重新选择！";
             logger.info("选题参考文档已存在，上传失败");
@@ -329,7 +410,8 @@ public class TeacherController {
             object.put("code",-1);
             object.put("msg",msg);
             return object.toString();
-        }else {
+        }
+        else {
             int groupLeader = Integer.parseInt(request.getParameter("groupLeader"));
             Student student1 = studentService.selectByPrimaryKey(groupLeader);
             int updateGroupId = studentService.updateGroupIdByTopicId(id, groupId);
@@ -508,7 +590,7 @@ public class TeacherController {
                                       @RequestParam("teaid") Integer teaid,
                                       @RequestParam("deadline")String deadline,
                                       @RequestParam("releaseTime")String releaseTime,
-                                      @RequestParam("file") MultipartFile file,Model model) throws ParseException, UnsupportedEncodingException {
+                                      @RequestParam("file") MultipartFile file,Model model,HttpServletRequest req) throws ParseException, UnsupportedEncodingException {
         logger.info("教师添加一条阶段性任务");
         if(!file.isEmpty()){
             Stagetopic stagetopic =new Stagetopic();
@@ -526,9 +608,11 @@ public class TeacherController {
             if(!dir.exists()) {
                 dir.mkdir();
             }
-            String path = uploadStageTopicFilePath + file.getOriginalFilename();
-            stagetopic.setDownloadlink(path);
-            File tempFile = tempFile =  new File(path);
+            String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+            String fileName = file.getOriginalFilename();
+            String fileServerPath = basePath + uploadStageTopicResourceHandler.substring(0, uploadStageTopicResourceHandler.lastIndexOf("/") + 1) + fileName;
+            stagetopic.setDownloadlink(fileServerPath);
+            File tempFile =  new File(uploadStageTopicFilePath,fileName);
             if(tempFile.exists()){
                 model.addAttribute("IsSuccess","文件已存在，请重新选择文件");
                 logger.info("上传的阶段性参考文件已存在");
@@ -607,7 +691,8 @@ public class TeacherController {
             logger.info(isUpdateSuccess);
             return "redirect:/manageStageTask?currentUser=" + teaid + "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8");
         }
-        File deleteFile = new File(downloadlink);
+        String oldFileName=downloadlink.split("/")[5];
+        File deleteFile = new File(uploadStageTopicFilePath,oldFileName);
         if(deleteFile!=null){
             //文件不为空，执行删除
             deleteFile.delete();
@@ -628,11 +713,13 @@ public class TeacherController {
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = uploadStageTopicFilePath + file.getOriginalFilename();
-        stagetopic.setDownloadlink(path);
+        String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String fileName = file.getOriginalFilename();
+        String fileServerPath = basePath + uploadStageTopicResourceHandler.substring(0, uploadStageTopicResourceHandler.lastIndexOf("/") + 1) + fileName;
+        stagetopic.setDownloadlink(fileServerPath);
         File tempFile = null;
         try {
-            tempFile =  new File(path);
+            tempFile =  new File(uploadStageTopicFilePath,fileName);
             FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
         }catch (Exception e){
             e.printStackTrace();
@@ -828,10 +915,18 @@ public class TeacherController {
         outstandingcase.setTechnology(technology);
         outstandingcase.setSubmittime(new Date());
         outstandingcase.setTeaid(topic.getTeaid());
+        JSONObject object=new JSONObject();
+        if(topic.getScore()==null){
+            object.put("code",-1);
+            String msg="请先给选题评分";
+            logger.info("选题未评分");
+            object.put("msg",msg);
+            return object.toString();
+        }
         outstandingcase.setScore(topic.getScore().toString());
         outstandingcase.setSuggestion(topic.getSuggestion());
         int insert = outstandingcaseService.insert(outstandingcase);
-        JSONObject object=new JSONObject();
+
         if(insert>0){
             object.put("code",1);
             String msg="成功将题号为"+topicId+"的选题设为优秀案例";
@@ -930,7 +1025,7 @@ public class TeacherController {
                                  Integer teaId,
                                  String Keyword,
                                  Integer Type,
-                                 MultipartFile file,Model model) throws UnsupportedEncodingException {
+                                 MultipartFile file,Model model,HttpServletRequest req) throws UnsupportedEncodingException {
         logger.info("教师通过id更新优秀案例库");
         if(file.isEmpty()){
             Outstandingcase outstandingcase =new Outstandingcase();
@@ -949,7 +1044,8 @@ public class TeacherController {
             logger.info(isUpdateSuccess);
             return "redirect:/manageCaseLib?currentUser=" + teaId +"&Type="+Type+ "&page=1&isUpdateSuccess=" + URLEncoder.encode(isUpdateSuccess, "UTF-8")+"&Keyword="+Keyword;
         }
-        File deleteFile = new File(downloadlink);
+        String oldFileName=downloadlink.split("/")[5];
+        File deleteFile = new File(uploadOutstandingCaseFilePath,oldFileName);
         if(deleteFile!=null){
             //文件不为空，执行删除
             deleteFile.delete();
@@ -964,15 +1060,17 @@ public class TeacherController {
         outstandingcase.setSuggestion(suggestion);
         outstandingcase.setGroupmember(groupmember);
         outstandingcase.setTechnology(technology);
-        File dir = new File(outstandingCasePath);
+        File dir = new File(uploadOutstandingCaseFilePath);
         if(!dir.exists()) {
             dir.mkdir();
         }
-        String path = outstandingCasePath + file.getOriginalFilename();
-        outstandingcase.setDownloadlink(path);
+        String basePath = req.getScheme() + "://" + req.getServerName() + ":" + req.getServerPort() + req.getContextPath();
+        String fileName = file.getOriginalFilename();
+        String fileServerPath = basePath + uploadOutstandingCaseFileResourceHandler.substring(0, uploadOutstandingCaseFileResourceHandler.lastIndexOf("/") + 1) + fileName;
+        outstandingcase.setDownloadlink(fileServerPath);
         File tempFile = null;
         try {
-            tempFile =  new File(path);
+            tempFile =  new File(uploadOutstandingCaseFilePath,fileName);
             FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
         }catch (Exception e){
             e.printStackTrace();

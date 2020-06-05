@@ -25,7 +25,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/");
         registry.addResourceHandler("/templates/**").addResourceLocations("classpath:/templates/");
-        registry.addResourceHandler("/uploadfile/**").addResourceLocations("classpath:/uploadfile/");
+        registry.addResourceHandler("/uploadFile/topic/**").addResourceLocations("file:/home/uploadFile/topic/");
+        registry.addResourceHandler("/uploadFile/topicResult/**").addResourceLocations("file:/home/uploadFile/topicResult/");
+        registry.addResourceHandler("/uploadFile/stageTopic/**").addResourceLocations("file:/home/uploadFile/stageTopic/");
+        registry.addResourceHandler("/uploadFile/stageTopicResult/**").addResourceLocations("file:/home/uploadFile/stageTopicResult/");
+        registry.addResourceHandler("/uploadFile/blockTask/**").addResourceLocations("file:/home/uploadFile/blockTask/");
+        registry.addResourceHandler("/uploadFile/blockTaskResult/**").addResourceLocations("file:/home/uploadFile/blockTaskResult/");
+        registry.addResourceHandler("/uploadFile/OutstandingCase/**").addResourceLocations("file:/home/uploadFile/OutstandingCase/");
 
     }
 

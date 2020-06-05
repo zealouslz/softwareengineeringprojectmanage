@@ -48,7 +48,8 @@ public class LoginController {
 
                 redirectAttributes.addFlashAttribute("verificationError","验证码错误");
                 return "redirect:/";
-            } else if ("administrator".equals(identity)) {
+            }
+            else if ("administrator".equals(identity)) {
                 Admin admin = adminService.selectByAdminId(userid);
                 if (admin == null) {
                     redirectAttributes.addFlashAttribute("error","该管理员账户不存在");
@@ -63,7 +64,8 @@ public class LoginController {
                     }
                 }
 
-            } else if ("teacher".equals(identity)) {
+            }
+            else if ("teacher".equals(identity)) {
                 Teacher teacher = teacherService.selectByTeaId(userid);
                 if (teacher == null) {
                     redirectAttributes.addFlashAttribute("error", "该教师账户不存在");
@@ -79,7 +81,8 @@ public class LoginController {
                     }
                 }
 
-            } else if ("student".equals(identity)) {
+            }
+            else if ("student".equals(identity)) {
                 Student student = studentService.selectByStuId(userid);
                 if (student == null) {
                     redirectAttributes.addFlashAttribute("error", "该学生账户不存在");
@@ -95,7 +98,8 @@ public class LoginController {
                         return "redirect:/";
                     }
                 }
-            } else {
+            }
+            else {
                 redirectAttributes.addFlashAttribute("error", "用户密码错误");
                 return "redirect:/";
             }

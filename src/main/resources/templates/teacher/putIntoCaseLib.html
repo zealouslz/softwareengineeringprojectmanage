@@ -75,16 +75,17 @@
 						<div class="row form-group">
 							<label class="control-label col-lg-1" for="downloadlink"><strong>文档+代码：</strong></label>
                             <div class="col-lg-5 col-md-6">
-								<a th:href="@{${topic.result}}" th:text="${topic.result}" download="" id="downloadlink"></a>
+								<a th:href="@{${topic.result}}" th:text="${topic.result.split('/')[5]}" download="" id="downloadlink"></a>
 						    </div>
                         </div>
 
-						<div class="row form-group">
-							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="score"><strong>小组评分：</strong></label>
-							<div class="col-lg-5 col-md-6" >
-								<input id="score" name="score" type="number" class="form-control"  th:value="${topic.score}" >
-							</div>
+					<div class="row form-group">
+						<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="score"><strong>小组评分：</strong></label>
+						<div class="col-lg-5 col-md-6" >
+							<input id="score" name="score" type="number" class="form-control"  th:value="${topic.score}" th:if="${topic.score!=null}" th:readonly="true">
+							<input  name="score" type="number" class="form-control"  th:value="'暂未评分，请先给选题评分'" th:if="${topic.score==null}" th:readonly="true">
 						</div>
+					</div>
 						<div class="row form-group">
 							<label class="control-label col-lg-1" style="float:left;margin-top:5px;cursor:pointer" for="suggestion"><strong>评语:</strong></label>
 							<div class="col-lg-5 col-md-6">

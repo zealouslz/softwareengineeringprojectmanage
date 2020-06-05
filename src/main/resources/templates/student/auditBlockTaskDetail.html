@@ -84,7 +84,7 @@
 						<div class="row form-group">
 							<label class="control-label col-lg-1" for="downloadlink"><strong>文档下载：</strong></label>
 							<div class="col-lg-5 col-md-6">
-								<a th:href="@{${blocktask.uploadfile}}" th:text="${blocktask.uploadfile}" download="" id="downloadlink"></a>
+								<a th:href="@{${blocktask.uploadfile}}" th:text="${blocktask.uploadfile.split('/')[5]}" download="" id="downloadlink"></a>
 							</div>
 						</div>
 						<div class="row form-group">
